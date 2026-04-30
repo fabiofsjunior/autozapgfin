@@ -1,66 +1,90 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>AUTOZAP GFIN</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AUTOZAP GFIN</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#4CAF50">
-<link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#4CAF50" />
+    <link rel="manifest" href="manifest.json" />
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-body { font-family: Arial; background:#f4f6f8; padding:20px; }
-.card { background:white; padding:20px; margin-bottom:20px; border-radius:10px; }
-input, select, button { width:100%; padding:10px; margin-top:10px; }
-button { background:#4CAF50; color:white; border:none; }
-table { width:100%; margin-top:10px; }
-td { padding:5px; border-bottom:1px solid #eee; text-align:center; }
-</style>
-</head>
+    <style>
+      body {
+        font-family: Arial;
+        background: #f4f6f8;
+        padding: 20px;
+      }
+      .card {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+      }
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+      }
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+      }
+      table {
+        width: 100%;
+        margin-top: 10px;
+      }
+      td {
+        padding: 5px;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+      }
+    </style>
+  </head>
 
-<body>
+  <body>
+    <h2>💰 AUTOZAP GFIN</h2>
 
-<h2>💰 AUTOZAP GFIN</h2>
+    <div class="card">
+      <input id="desc" placeholder="Descrição" />
 
-<div class="card">
-  <input id="desc" placeholder="Descrição">
-  
-  <select id="pagamento">
-    <option>Pix</option>
-    <option>Cartão</option>
-    <option>Dinheiro</option>
-  </select>
+      <select id="pagamento">
+        <option>Pix</option>
+        <option>Cartão</option>
+        <option>Dinheiro</option>
+      </select>
 
-  <select id="categoria">
-    <option>Alimentação</option>
-    <option>Transporte</option>
-    <option>Lazer</option>
-    <option>Contas</option>
-  </select>
+      <select id="categoria">
+        <option>Alimentação</option>
+        <option>Transporte</option>
+        <option>Lazer</option>
+        <option>Contas</option>
+      </select>
 
-  <input id="valor" type="number" placeholder="Valor">
+      <input id="valor" type="number" placeholder="Valor" />
 
-  <button onclick="enviar()">Salvar</button>
-</div>
+      <button onclick="enviar()">Salvar</button>
+    </div>
 
-<div class="card">
-  <canvas id="grafico"></canvas>
-</div>
+    <div class="card">
+      <canvas id="grafico"></canvas>
+    </div>
 
-<div class="card">
-  <h3>Últimas transações</h3>
-  <table id="tabela"></table>
-</div>
+    <div class="card">
+      <h3>📄 Últimas Transações</h3>
+      <div id="historico"></div>
+    </div>
 
-<script src="app.js"></script>
+    <script src="app.js"></script>
 
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-</script>
-
-</body>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("service-worker.js");
+      }
+    </script>
+  </body>
 </html>
