@@ -1,57 +1,16 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="theme-color" content="#4CAF50" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#4CAF50">
 
 <title>AUTOZAP GFIN</title>
 
-<link rel="manifest" href="manifest.json" />
-<link rel="icon" href="favicon.ico" />
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.json">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-.item {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.acoes {
-  display:flex;
-  gap:5px;
-}
-
-.btn {
-  padding:5px 8px;
-  font-size:12px;
-  border:none;
-  border-radius:6px;
-}
-
-.edit { background:#2196F3; color:white; }
-.del { background:#f44336; color:white; }
-
-#historico {
-  max-height:300px;
-  overflow-y:auto;
-}
-
-/* NAVBAR */
-.navbar {
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  background:white;
-  display:flex;
-  justify-content:space-around;
-  padding:10px;
-  box-shadow:0 -2px 6px rgba(0,0,0,0.1);
-}
-</style>
 </head>
 
 <body>
@@ -60,73 +19,60 @@
 
 <h2>💰 AUTOZAP GFIN</h2>
 
-<!-- GRÁFICO -->
-<div class="card" id="graficoCard">
-  <canvas id="grafico"></canvas>
-</div>
-
 <!-- FORM -->
 <div class="card">
-  <input id="desc" placeholder="Descrição" />
 
-  <select id="pagamento">
-    <option>Pix</option>
-    <option>Cartão</option>
-    <option>Dinheiro</option>
-  </select>
+<input id="desc" placeholder="Descrição">
 
-  <select id="categoria">
-    <option>Alimentação</option>
-    <option>Lanche</option>
-    <option>Saúde</option>
-    <option>Transporte</option>
-    <option>Doação</option>
-    <option>Lazer</option>
-    <option>Outros</option>
-    <option>Roupas</option>
-    <option>Educação</option>
-  </select>
+<select id="pagamento">
+  <option>Pix</option>
+  <option>Cartão</option>
+  <option>Dinheiro</option>
+</select>
 
-  <input id="valor" type="number" placeholder="Valor" />
+<select id="categoria">
+  <option>Alimentação</option>
+  <option>Lanche</option>
+  <option>Saúde</option>
+  <option>Transporte</option>
+  <option>Doação</option>
+  <option>Lazer</option>
+  <option>Outros</option>
+  <option>Roupas</option>
+  <option>Educação</option>
+</select>
 
-  <button onclick="enviar()">Salvar</button>
+<div class="input-group">
+  <span>R$</span>
+  <input id="valor" type="number" step="0.01">
+</div>
+
+<button class="btn-primary" onclick="enviar()">Salvar</button>
+
+</div>
+
+<!-- GRÁFICO -->
+<div class="card">
+<canvas id="grafico"></canvas>
 </div>
 
 <!-- HISTÓRICO -->
-<div class="card" id="historicoCard">
-  <h3>📄 Últimas Transações</h3>
-  <div id="historico"></div>
+<div class="card">
+<h3>📄 Últimas Transações</h3>
+<div id="historico"></div>
 </div>
 
 </div>
 
 <!-- NAVBAR -->
 <div class="navbar">
-  <button onclick="location.href='index.html'">🏠</button>
-  <button onclick="location.href='dashboard.html'">📊</button>
+<button onclick="location.href='index.html'">🏠</button>
+<button onclick="location.href='dashboard.html'">📊</button>
 </div>
 
 <script src="app.js"></script>
 
 <script>
-function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function scrollToGrafico() {
-  document.getElementById("graficoCard").scrollIntoView({ behavior: "smooth" });
-}
-
-function scrollToHistorico() {
-  document.getElementById("historicoCard").scrollIntoView({ behavior: "smooth" });
-}
-
-// AUTO UPDATE
-setInterval(() => {
-  if (typeof carregar === "function") carregar();
-}, 10000);
-
-// SERVICE WORKER
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
