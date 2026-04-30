@@ -1,172 +1,167 @@
 <!doctype html>
 <html lang="pt-br">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="theme-color" content="#4CAF50" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#4CAF50" />
 
-<title>AUTOZAP GFIN</title>
+    <title>AUTOZAP GFIN</title>
 
-<link rel="manifest" href="manifest.json" />
-<link rel="icon" href="favicon.ico" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="favicon.ico" />
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-* {
-  box-sizing: border-box;
-}
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        margin: 0;
+        padding: 15px;
+      }
 
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  margin: 0;
-  padding: 15px;
-}
+      h2 {
+        text-align: center;
+      }
 
-h2 {
-  text-align: center;
-}
+      /* 🔥 CONTAINER */
+      .container {
+        max-width: 600px;
+        margin: auto;
+      }
 
-/* 🔥 CONTAINER */
-.container {
-  max-width: 600px;
-  margin: auto;
-}
+      /* 🔥 CARDS */
+      .card {
+        background: white;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      }
 
-/* 🔥 CARDS */
-.card {
-  background: white;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
+      /* 🔥 INPUTS */
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+      }
 
-/* 🔥 INPUTS */
-input, select, button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-}
+      /* 🔥 BOTÃO */
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+      }
 
-/* 🔥 BOTÃO */
-button {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
+      button:hover {
+        background: #43a047;
+      }
 
-button:hover {
-  background: #43a047;
-}
+      /* 🔥 HISTÓRICO */
+      .item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+      }
 
-/* 🔥 HISTÓRICO */
-.item {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
+      .item strong {
+        display: block;
+      }
 
-.item strong {
-  display: block;
-}
+      /* 🔥 RESPONSIVO */
+      @media (max-width: 480px) {
+        body {
+          padding: 10px;
+        }
 
-/* 🔥 RESPONSIVO */
-@media (max-width: 480px) {
-  body {
-    padding: 10px;
-  }
+        h2 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
 
-  h2 {
-    font-size: 20px;
-  }
-}
+  <body>
+    <div class="container">
+      <h2>💰 AUTOZAP GFIN</h2>
 
-</style>
-</head>
+      <!-- FORM -->
+      <div class="card">
+        <input id="desc" placeholder="Descrição" />
 
-<body>
+        <select id="pagamento">
+          <option>Pix</option>
+          <option>Cartão</option>
+          <option>Dinheiro</option>
+        </select>
 
-<div class="container">
+        <select id="categoria">
+          <option>Alimentação</option>
+          <option>Lanche</option>
+          <option>Saúde</option>
+          <option>Transporte</option>
+          <option>Doação</option>
+          <option>Lazer</option>
+          <option>Outros</option>
+          <option>Roupas</option>
+          <option>Educação</option>
+        </select>
 
-  <h2>💰 AUTOZAP GFIN</h2>
+        <!--<input id="valor" type="number" placeholder="Valor" />-->
+        <div class="input-group">
+          <span class="input-group-text">R$</span>
+          <input type="number" step="0.01" class="form-control" />
+        </div>
 
-  <!-- FORM -->
-  <div class="card">
-    <input id="desc" placeholder="Descrição" />
+        <button onclick="enviar()">Salvar</button>
+      </div>
 
-    <select id="pagamento">
-      <option>Pix</option>
-      <option>Cartão</option>
-      <option>Dinheiro</option>
-    </select>
+      <!-- GRÁFICO -->
+      <div class="card">
+        <canvas id="grafico"></canvas>
+      </div>
 
-    <select id="categoria">
-      <option>Alimentação</option>
-      <option>Lanche</option>
-      <option>Saúde</option>
-      <option>Transporte</option>
-      <option>Doação</option>
-      <option>Lazer</option>
-      <option>Outros</option>
-      <option>Roupas</option>
-      <option>Educação</option>
-      
-    </select>
+      <!-- HISTÓRICO -->
+      <div class="card">
+        <h3>📄 Últimas Transações</h3>
+        <div id="historico"></div>
+      </div>
+    </div>
 
-    <!--<input id="valor" type="number" placeholder="Valor" />-->
-    <div class="input-group">
-    <span class="input-group-text">R$</span>
-    <input type="number" step="0.01" class="form-control">
-</div>
+    <script src="app.js"></script>
 
-
-    <button onclick="enviar()">Salvar</button>
-  </div>
-
-  <!-- GRÁFICO -->
-  <div class="card">
-    <canvas id="grafico"></canvas>
-  </div>
-
-  <!-- HISTÓRICO -->
-  <div class="card">
-    <h3>📄 Últimas Transações</h3>
-    <div id="historico"></div>
-  </div>
-
-</div>
-
-<script src="app.js"></script>
-
-<script>
-/* =======================
+    <script>
+      /* =======================
    🔄 AUTO ATUALIZAÇÃO
 ======================= */
 
-// atualiza a cada 10 segundos
-setInterval(() => {
-  if (typeof carregar === "function") {
-    carregar();
-  }
-}, 10000);
+      // atualiza a cada 10 segundos
+      setInterval(() => {
+        if (typeof carregar === "function") {
+          carregar();
+        }
+      }, 10000);
 
-/* =======================
+      /* =======================
    📲 SERVICE WORKER
 ======================= */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js")
-    .then(() => console.log("SW ativo"))
-    .catch(err => console.log("SW erro:", err));
-}
-</script>
-
-</body>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("service-worker.js")
+          .then(() => console.log("SW ativo"))
+          .catch((err) => console.log("SW erro:", err));
+      }
+    </script>
+  </body>
 </html>
