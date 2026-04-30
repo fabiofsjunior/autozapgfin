@@ -1,131 +1,145 @@
 const API =
   "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
+
+let editandoId = null;
+
 // =======================
-// 📤 ENVIAR DADOS
+// 📤 ENVIAR / EDITAR
 // =======================
 async function enviar() {
-  try {
-    const data = {
-      descricao: document.getElementById("desc").value,
-      tipoPagamento: document.getElementById("pagamento").value,
-      categoria: document.getElementById("categoria").value,
-      valor: parseFloat(document.getElementById("valor").value),
-    };
 
-    if (!data.descricao || !data.valor) {
-      alert("Preencha descrição e valor");
-      return;
-    }
+  const desc = document.getElementById("desc").value;
+  const pagamento = document.getElementById("pagamento").value;
+  const categoria = document.getElementById("categoria").value;
+  const valor = parseFloat(document.querySelector('input[type="number"]').value);
 
-    await fetch(API, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-
-    limparCampos();
-    carregar();
-  } catch (e) {
-    console.error("Erro ao enviar:", e);
+  if (!desc || !valor) {
+    alert("Preencha os campos");
+    return;
   }
+
+  const payload = {
+    id: editandoId,
+    descricao: desc,
+    tipoPagamento: pagamento,
+    categoria: categoria,
+    valor: valor
+  };
+
+  const method = editandoId ? "PUT" : "POST";
+
+  await fetch(API, {
+    method: method,
+    body: JSON.stringify(payload)
+  });
+
+  limparCampos();
+  editandoId = null;
+
+  carregar();
 }
 
 // =======================
-// 📥 CARREGAR DADOS
+// 📥 CARREGAR
 // =======================
 async function carregar() {
-  try {
-    const res = await fetch(API + "?mode=web");
-    const dados = await res.json();
 
-    console.log("OK:", dados);
+  const res = await fetch(API + "?mode=web");
+  const dados = await res.json();
 
-    // 🔥 FILTRO: só lançamentos válidos
-    const lancamentos = dados.filter(
-      (item) => item.ID && item.Valor !== "" && !isNaN(item.Valor),
-    );
+  const lancamentos = dados.filter(i => i.ID && i.Valor);
 
-    // 🔥 AGRUPAR POR CATEGORIA
-    let resumo = {};
-
-    lancamentos.forEach((item) => {
-      const categoria = item.Categoria || "Outros";
-      const valor = parseFloat(item.Valor) || 0;
-
-      if (!resumo[categoria]) resumo[categoria] = 0;
-      resumo[categoria] += valor;
-    });
-
-    renderGrafico(resumo);
-    renderHistorico(lancamentos);
-  } catch (e) {
-    console.error("Erro ao carregar:", e);
-  }
+  renderHistorico(lancamentos);
+  renderGrafico(lancamentos);
 }
 
 // =======================
 // 📊 GRÁFICO
 // =======================
-function renderGrafico(resumo) {
-  const labels = Object.keys(resumo);
-  const valores = Object.values(resumo);
+function renderGrafico(lista) {
+
+  let resumo = {};
+
+  lista.forEach(item => {
+    const cat = item.Categoria || "Outros";
+    const val = parseFloat(item.Valor) || 0;
+
+    if (!resumo[cat]) resumo[cat] = 0;
+    resumo[cat] += val;
+  });
 
   if (window.chart) window.chart.destroy();
 
-  const ctx = document.getElementById("grafico");
-
-  window.chart = new Chart(ctx, {
+  new Chart(document.getElementById("grafico"), {
     type: "bar",
     data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Gastos por Categoria",
-          data: valores,
-        },
-      ],
-    },
+      labels: Object.keys(resumo),
+      datasets: [{
+        label: "Gastos",
+        data: Object.values(resumo)
+      }]
+    }
   });
 }
 
 // =======================
-// 📄 HISTÓRICO
+// 📄 HISTÓRICO (CRUD UI)
 // =======================
 function renderHistorico(lista) {
+
   const el = document.getElementById("historico");
 
-  if (!el) return;
+  el.innerHTML = lista.slice(-10).reverse().map(item => `
+    <div class="item">
+      <strong>${item.Descrição}</strong>
+      R$ ${item.Valor} • ${item.Categoria}
 
-  const ultimos = lista.slice(-10).reverse();
-
-  el.innerHTML = ultimos
-    .map(
-      (item) => `
-    <div style="padding:8px;border-bottom:1px solid #eee;">
-      <b>${item.Descrição || "Sem descrição"}</b><br>
-      R$ ${formatarValor(item.Valor)} • ${item.Categoria || "Outros"}
+      <div style="margin-top:8px; display:flex; gap:5px;">
+        <button onclick="editar(${item.ID}, '${item.Descrição}', '${item.Categoria}', '${item.Pagamento}', ${item.Valor})">✏️</button>
+        <button onclick="deletar(${item.ID})" style="background:#e53935;">🗑️</button>
+      </div>
     </div>
-  `,
-    )
-    .join("");
+  `).join("");
 }
 
 // =======================
-// 🧹 LIMPAR CAMPOS
+// ✏️ EDITAR
+// =======================
+function editar(id, desc, categoria, pagamento, valor) {
+
+  document.getElementById("desc").value = desc;
+  document.getElementById("categoria").value = categoria;
+  document.getElementById("pagamento").value = pagamento;
+  document.querySelector('input[type="number"]').value = valor;
+
+  editandoId = id;
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// =======================
+// 🗑️ DELETAR
+// =======================
+async function deletar(id) {
+
+  if (!confirm("Deseja deletar?")) return;
+
+  await fetch(API, {
+    method: "DELETE",
+    body: JSON.stringify({ id })
+  });
+
+  carregar();
+}
+
+// =======================
+// 🧹 LIMPAR
 // =======================
 function limparCampos() {
   document.getElementById("desc").value = "";
-  document.getElementById("valor").value = "";
+  document.querySelector('input[type="number"]').value = "";
 }
 
-// =======================
-// 💰 FORMATAR VALOR
-// =======================
-function formatarValor(v) {
-  return Number(v).toFixed(2);
-}
-
-// =======================
-// 🚀 INIT
-// =======================
+// INIT
 carregar();
