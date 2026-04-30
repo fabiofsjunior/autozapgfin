@@ -1,6 +1,12 @@
 const API =
   "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
+
+let ultimaVersao = null;
+
+// =======================
+// ➕ CRIAR
+// =======================
 async function enviar() {
 
   const data = {
@@ -35,14 +41,36 @@ async function carregar() {
 }
 
 // =======================
+// ⚡ TEMPO REAL (FAKE)
+// =======================
+setInterval(async () => {
+
+  try {
+    const res = await fetch(API + "?mode=check");
+    const data = await res.json();
+
+    if (ultimaVersao !== data.version) {
+      ultimaVersao = data.version;
+      carregar();
+    }
+
+  } catch (e) {
+    console.log("Erro check:", e);
+  }
+
+}, 5000);
+
+// =======================
 // 📄 HISTÓRICO
 // =======================
 function renderHistorico(lista) {
 
   historico.innerHTML = lista.map(item => `
     <div class="item">
-      <strong>${item.Descrição}</strong>
-      R$ ${item.Valor} • ${item.Categoria}
+      <div>
+        <strong>${item.Descrição}</strong>
+        <br>R$ ${item.Valor} • ${item.Categoria}
+      </div>
 
       <div class="acoes">
         <button class="btn edit" onclick="editar(${item.ID})">✏️</button>
@@ -98,6 +126,8 @@ function limparCampos() {
 }
 
 // =======================
+// 📊 GRÁFICO
+// =======================
 function renderGrafico(lista) {
 
   let resumo = {};
@@ -114,10 +144,12 @@ function renderGrafico(lista) {
     data: {
       labels: Object.keys(resumo),
       datasets: [{
+        label: "Gastos",
         data: Object.values(resumo)
       }]
     }
   });
 }
 
+// =======================
 carregar();
