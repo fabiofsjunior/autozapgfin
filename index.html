@@ -13,101 +13,43 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-* { box-sizing: border-box; }
-
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  margin: 0;
-  padding: 10px;
-}
-
-/* CONTAINER */
-.container {
-  max-width: 600px;
-  margin: auto;
-  padding-bottom: 80px;
-}
-
-/* CARDS */
-.card {
-  background: white;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 12px;
-}
-
-/* INPUTS */
-input, select, button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-}
-
-/* BOTÃO */
-button {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  font-weight: bold;
-}
-
-/* HISTÓRICO */
 .item {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.item strong {
-  display: block;
+.acoes {
+  display:flex;
+  gap:5px;
 }
 
-/* BOTÕES CRUD */
-.actions {
-  margin-top: 5px;
-  display: flex;
-  gap: 5px;
+.btn {
+  padding:5px 8px;
+  font-size:12px;
+  border:none;
+  border-radius:6px;
 }
 
-.actions button {
-  flex: 1;
-  padding: 5px;
-  font-size: 12px;
-  border-radius: 6px;
+.edit { background:#2196F3; color:white; }
+.del { background:#f44336; color:white; }
+
+#historico {
+  max-height:300px;
+  overflow-y:auto;
 }
 
-.edit { background: #2196F3; }
-.delete { background: #f44336; }
-
-/* NAVBAR PWA */
+/* NAVBAR */
 .navbar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: white;
-  display: flex;
-  justify-content: space-around;
-  border-top: 1px solid #ddd;
-  padding: 10px 0;
-}
-
-.navbar button {
-  background: none;
-  border: none;
-  font-size: 14px;
-  color: #555;
-}
-
-/* RESPONSIVO */
-@media (max-width: 480px) {
-  .actions button {
-    font-size: 11px;
-    padding: 4px;
-  }
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  background:white;
+  display:flex;
+  justify-content:space-around;
+  padding:10px;
+  box-shadow:0 -2px 6px rgba(0,0,0,0.1);
 }
 </style>
 </head>
@@ -160,9 +102,8 @@ button {
 
 <!-- NAVBAR -->
 <div class="navbar">
-  <button onclick="scrollToTop()">🏠</button>
-  <button onclick="scrollToGrafico()">📊</button>
-  <button onclick="scrollToHistorico()">📄</button>
+  <button onclick="location.href='index.html'">🏠</button>
+  <button onclick="location.href='dashboard.html'">📊</button>
 </div>
 
 <script src="app.js"></script>

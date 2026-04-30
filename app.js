@@ -2,11 +2,13 @@ const API =
   "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
 async function enviar() {
+
   const data = {
-    descricao: document.getElementById("desc").value,
-    tipoPagamento: document.getElementById("pagamento").value,
-    categoria: document.getElementById("categoria").value,
-    valor: parseFloat(document.getElementById("valor").value)
+    action: "create",
+    descricao: desc.value,
+    pagamento: pagamento.value,
+    categoria: categoria.value,
+    valor: parseFloat(valor.value)
   };
 
   await fetch(API, {
@@ -14,95 +16,108 @@ async function enviar() {
     body: JSON.stringify(data)
   });
 
-  // 🔥 LIMPAR CAMPOS
-  document.getElementById("desc").value = "";
-  document.getElementById("valor").value = "";
-
+  limparCampos();
   carregar();
 }
 
+// =======================
+// 🔄 CARREGAR
+// =======================
 async function carregar() {
+
   const res = await fetch(API + "?mode=web");
   const dados = await res.json();
 
-  const lancamentos = dados.filter(i => i.ID && i.Valor);
+  const lista = dados.slice(-50).reverse();
 
-  renderGrafico(lancamentos);
-  renderHistorico(lancamentos);
+  renderHistorico(lista);
+  renderGrafico(lista);
 }
 
-function renderGrafico(lista) {
-  let resumo = {};
-
-  lista.forEach(i => {
-    const cat = i.Categoria || "Outros";
-    const val = parseFloat(i.Valor) || 0;
-
-    if (!resumo[cat]) resumo[cat] = 0;
-    resumo[cat] += val;
-  });
-
-  if (window.chart) window.chart.destroy();
-
-  const ctx = document.getElementById("grafico");
-
-  window.chart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: Object.keys(resumo),
-      datasets: [{
-        label: "Gastos",
-        data: Object.values(resumo)
-      }]
-    }
-  });
-}
-
+// =======================
+// 📄 HISTÓRICO
+// =======================
 function renderHistorico(lista) {
-  const el = document.getElementById("historico");
 
-  const ultimos = lista.slice(-10).reverse();
-
-  el.innerHTML = ultimos.map(item => `
+  historico.innerHTML = lista.map(item => `
     <div class="item">
       <strong>${item.Descrição}</strong>
       R$ ${item.Valor} • ${item.Categoria}
 
-      <div class="actions">
-        <button class="edit" onclick="editar(${item.ID})">Editar</button>
-        <button class="delete" onclick="deletar(${item.ID})">Deletar</button>
+      <div class="acoes">
+        <button class="btn edit" onclick="editar(${item.ID})">✏️</button>
+        <button class="btn del" onclick="deletar(${item.ID})">🗑</button>
       </div>
     </div>
   `).join("");
 }
 
-// EDITAR
-function editar(id) {
-  const novaDesc = prompt("Nova descrição:");
-  const novoValor = prompt("Novo valor:");
+// =======================
+// ✏️ EDITAR
+// =======================
+async function editar(id) {
 
-  fetch(API, {
+  const descricao = prompt("Nova descrição:");
+  const valor = prompt("Novo valor:");
+
+  await fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      action: "edit",
+      action: "update",
       id,
-      descricao: novaDesc,
-      valor: parseFloat(novoValor)
+      descricao,
+      valor
     })
-  }).then(carregar);
+  });
+
+  carregar();
 }
 
-// DELETAR
-function deletar(id) {
-  if (!confirm("Deseja excluir?")) return;
+// =======================
+// 🗑 DELETE
+// =======================
+async function deletar(id) {
 
-  fetch(API, {
+  if (!confirm("Deseja deletar?")) return;
+
+  await fetch(API, {
     method: "POST",
     body: JSON.stringify({
       action: "delete",
       id
     })
-  }).then(carregar);
+  });
+
+  carregar();
+}
+
+// =======================
+function limparCampos() {
+  desc.value = "";
+  valor.value = "";
+}
+
+// =======================
+function renderGrafico(lista) {
+
+  let resumo = {};
+
+  lista.forEach(item => {
+    const cat = item.Categoria;
+    resumo[cat] = (resumo[cat] || 0) + Number(item.Valor);
+  });
+
+  if (window.chart) window.chart.destroy();
+
+  window.chart = new Chart(grafico, {
+    type: "bar",
+    data: {
+      labels: Object.keys(resumo),
+      datasets: [{
+        data: Object.values(resumo)
+      }]
+    }
+  });
 }
 
 carregar();

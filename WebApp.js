@@ -1,4 +1,6 @@
-
+// =======================
+// 🔧 CONFIG
+// =======================
 const VERIFY_TOKEN = "autozapfinapp";
 const WHATSAPP_TOKEN = "SEU_WHATSAPP_TOKEN";
 const PHONE_NUMBER_ID = "SEU_PHONE_ID";
@@ -8,152 +10,104 @@ const GEMINI_API_KEY = "AIzaSyAbafJd_ZIFhI_nNe_FQk8p1iMpaA-6UPE";
 // 🔐 WEBHOOK META
 // =======================
 function doGet(e) {
+
+  // validação META
   if (
     e.parameter["hub.mode"] === "subscribe" &&
     e.parameter["hub.verify_token"] === VERIFY_TOKEN
   ) {
     return ContentService.createTextOutput(e.parameter["hub.challenge"]);
   }
+
+  // 🔥 API WEB (HTML)
+  if (e.parameter.mode === "web") {
+    const sheet = getOrCreateMonthlySheet();
+    const data = sheet.getDataRange().getValues();
+
+    const headers = data[0];
+
+    const json = data.slice(1).map(row => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = row[i]);
+      return obj;
+    });
+
+    return jsonResponse(json);
+  }
+
   return ContentService.createTextOutput("OK");
 }
 
 // =======================
-// 📩 WHATSAPP RECEIVER
+// 📩 POST (WEB + CRUD)
 // =======================
 function doPost(e) {
-  try {
 
-    const body = JSON.parse(e.postData.contents);
+  const sheet = getOrCreateMonthlySheet();
+  const data = JSON.parse(e.postData.contents);
 
-    const value = body?.entry?.[0]?.changes?.[0]?.value;
+  // 🔥 DELETE
+  if (data.action === "delete") {
+    deletarPorId(sheet, data.id);
+    return jsonResponse({ status: "deleted" });
+  }
 
-    const msg =
-      value?.messages?.[0]?.text?.body ||
-      value?.messages?.[0]?.interactive?.button_reply?.title;
+  // 🔥 EDIT
+  if (data.action === "edit") {
+    editarPorId(sheet, data);
+    return jsonResponse({ status: "edited" });
+  }
 
-    if (!msg) return jsonResponse({ status: "no message" });
+  // 🔥 CREATE
+  const now = new Date();
 
-    const sheet = getOrCreateMonthlySheet();
+  sheet.appendRow([
+    getNextID(sheet),
+    formatarData(now),
+    formatarHora(now),
+    data.descricao,
+    "Despesa",
+    data.tipoPagamento,
+    data.categoria,
+    data.valor
+  ]);
 
-    const linhas = msg
-      .replace(/\r/g, "")
-      .split("\n")
-      .map(l => l.trim())
-      .filter(l => l);
+  return jsonResponse({ status: "created" });
+}
 
-    let respostas = [];
+// =======================
+// ✏️ EDITAR
+// =======================
+function editarPorId(sheet, data) {
+  const values = sheet.getDataRange().getValues();
 
-    linhas.forEach(linha => {
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] == data.id) {
 
-      let lancamento = parseSimples(linha);
+      sheet.getRange(i + 1, 4).setValue(data.descricao);
+      sheet.getRange(i + 1, 8).setValue(data.valor);
 
-      if (!lancamento && GEMINI_API_KEY) {
-        lancamento = chamarGemini(linha);
-      }
-
-      if (!lancamento) {
-        respostas.push("⚠️ Não entendi: " + linha);
-        return;
-      }
-
-      const now = new Date();
-
-      sheet.appendRow([
-        getNextID(sheet),
-        formatarData(now),
-        formatarHora(now),
-        lancamento.descricao,
-        lancamento.tipo,
-        lancamento.forma_pagamento,
-        lancamento.categoria,
-        lancamento.valor
-      ]);
-
-      respostas.push("💰 OK: " + lancamento.descricao);
-    });
-
-    enviarWhats(respostas.join("\n"), body);
-
-    return jsonResponse({ status: "ok" });
-
-  } catch (err) {
-    return jsonResponse({ status: "erro", msg: err.message });
+      return;
+    }
   }
 }
 
 // =======================
-// 🧠 PARSER MANUAL
+// 🗑️ DELETAR
 // =======================
-function parseSimples(msg) {
+function deletarPorId(sheet, id) {
+  const values = sheet.getDataRange().getValues();
 
-  const regex = /(\d+[.,]?\d*)\s*\$\s*(.*)/i;
-  const match = msg.match(regex);
-
-  if (!match) return null;
-
-  const valor = parseFloat(match[1].replace(",", "."));
-
-  const partes = match[2].split(",");
-
-  return {
-    valor,
-    descricao: (partes[0] || "").trim(),
-    forma_pagamento: (partes[1] || "pix").trim(),
-    categoria: (partes[2] || "outros").trim(),
-    tipo: "Despesa"
-  };
-}
-
-// =======================
-// 🤖 GEMINI
-// =======================
-function chamarGemini(texto) {
-
-  try {
-
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
-      GEMINI_API_KEY;
-
-    const payload = {
-      contents: [{
-        parts: [{
-          text: `
-Extraia JSON financeiro:
-
-"${texto}"
-
-Formato:
-{
-  "valor": 0,
-  "descricao": "",
-  "forma_pagamento": "",
-  "categoria": "",
-  "tipo": "Despesa ou Receita"
-}
-`
-        }]
-      }]
-    };
-
-    const res = UrlFetchApp.fetch(url, {
-      method: "post",
-      contentType: "application/json",
-      payload: JSON.stringify(payload)
-    });
-
-    const json = JSON.parse(res.getContentText());
-    const text = json.candidates[0].content.parts[0].text;
-
-    return JSON.parse(text);
-
-  } catch (e) {
-    return null;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] == id) {
+      sheet.deleteRow(i + 1);
+      return;
+    }
   }
 }
 
 // =======================
-// 📦 PLANILHA MENSAL + FORMATAÇÃO (FIX PRINCIPAL)
+// 📦 PLANILHA MENSAL
 // =======================
 function getOrCreateMonthlySheet() {
 
@@ -169,39 +123,20 @@ function getOrCreateMonthlySheet() {
       "ID","Data","Hora","Descrição","Tipo","Pagamento","Categoria","Valor"
     ]);
 
-    // 🔥 FORMATAÇÃO AUTOMÁTICA (CORREÇÃO QUE VOCÊ QUERIA)
-      // 🔥 AUTO AJUSTE DE COLUNAS (AQUI)
-    sheet.autoResizeColumns(1, sheet.getLastColumn());
-    const range = sheet.getRange(1, 1, 1, 8);
-
-    range.setHorizontalAlignment("center");
-    range.setFontWeight("bold");
-
-    sheet.setColumnWidths(1, 8, 140);
-
-    // coluna valor (R$)
+    // formatação
+    sheet.getRange("A:H").setHorizontalAlignment("center");
     sheet.getRange("H:H").setNumberFormat('"R$" #,##0.00');
-    sheet.getRange("H:H").setHorizontalAlignment("center");
-
-    // centralizar geral
-    sheet.getDataRange().setHorizontalAlignment("center");
-
-
+    sheet.autoResizeColumns(1, 8);
   }
 
   return sheet;
 }
 
 // =======================
-// 📅 NOME DA ABA (ABR26)
+// 📅 NOME DA ABA
 // =======================
 function getMonthName(d) {
-
-  const meses = [
-    "JAN","FEV","MAR","ABR","MAI","JUN",
-    "JUL","AGO","SET","OUT","NOV","DEZ"
-  ];
-
+  const meses = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
   return meses[d.getMonth()] + String(d.getFullYear()).slice(-2);
 }
 
@@ -210,48 +145,19 @@ function getMonthName(d) {
 // =======================
 function getNextID(sheet) {
   const last = sheet.getLastRow();
-  return last <= 1 ? 1 : sheet.getRange(last, 1).getValue() + 1;
+  return last <= 1 ? 1 : sheet.getRange(last,1).getValue() + 1;
 }
 
 // =======================
-// ⏱ FORMATADORES
-// =======================
-function formatarData(d) {
+function formatarData(d){
   return Utilities.formatDate(d, Session.getScriptTimeZone(), "dd/MM/yyyy");
 }
 
-function formatarHora(d) {
+function formatarHora(d){
   return Utilities.formatDate(d, Session.getScriptTimeZone(), "HH:mm:ss");
 }
 
-// =======================
-// 📲 WHATSAPP SEND
-// =======================
-function enviarWhats(msg, body) {
-
-  const to = body.entry[0].changes[0].value.messages[0].from;
-
-  const url = `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`;
-
-  UrlFetchApp.fetch(url, {
-    method: "post",
-    headers: {
-      Authorization: "Bearer " + WHATSAPP_TOKEN
-    },
-    contentType: "application/json",
-    payload: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body: msg }
-    })
-  });
-}
-
-// =======================
-// 📦 RESPONSE
-// =======================
-function jsonResponse(obj) {
+function jsonResponse(obj){
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
