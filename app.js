@@ -1,69 +1,42 @@
 const API =
   "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
-
-let editandoId = null;
-
-// =======================
-// 📤 ENVIAR / EDITAR
-// =======================
 async function enviar() {
-
-  const desc = document.getElementById("desc").value;
-  const pagamento = document.getElementById("pagamento").value;
-  const categoria = document.getElementById("categoria").value;
-  const valor = parseFloat(document.querySelector('input[type="number"]').value);
-
-  if (!desc || !valor) {
-    alert("Preencha os campos");
-    return;
-  }
-
-  const payload = {
-    id: editandoId,
-    descricao: desc,
-    tipoPagamento: pagamento,
-    categoria: categoria,
-    valor: valor
+  const data = {
+    descricao: document.getElementById("desc").value,
+    tipoPagamento: document.getElementById("pagamento").value,
+    categoria: document.getElementById("categoria").value,
+    valor: parseFloat(document.getElementById("valor").value)
   };
 
-  const method = editandoId ? "PUT" : "POST";
-
   await fetch(API, {
-    method: method,
-    body: JSON.stringify(payload)
+    method: "POST",
+    body: JSON.stringify(data)
   });
 
-  limparCampos();
-  editandoId = null;
+  // 🔥 LIMPAR CAMPOS
+  document.getElementById("desc").value = "";
+  document.getElementById("valor").value = "";
 
   carregar();
 }
 
-// =======================
-// 📥 CARREGAR
-// =======================
 async function carregar() {
-
   const res = await fetch(API + "?mode=web");
   const dados = await res.json();
 
   const lancamentos = dados.filter(i => i.ID && i.Valor);
 
-  renderHistorico(lancamentos);
   renderGrafico(lancamentos);
+  renderHistorico(lancamentos);
 }
 
-// =======================
-// 📊 GRÁFICO
-// =======================
 function renderGrafico(lista) {
-
   let resumo = {};
 
-  lista.forEach(item => {
-    const cat = item.Categoria || "Outros";
-    const val = parseFloat(item.Valor) || 0;
+  lista.forEach(i => {
+    const cat = i.Categoria || "Outros";
+    const val = parseFloat(i.Valor) || 0;
 
     if (!resumo[cat]) resumo[cat] = 0;
     resumo[cat] += val;
@@ -71,7 +44,9 @@ function renderGrafico(lista) {
 
   if (window.chart) window.chart.destroy();
 
-  new Chart(document.getElementById("grafico"), {
+  const ctx = document.getElementById("grafico");
+
+  window.chart = new Chart(ctx, {
     type: "bar",
     data: {
       labels: Object.keys(resumo),
@@ -83,63 +58,51 @@ function renderGrafico(lista) {
   });
 }
 
-// =======================
-// 📄 HISTÓRICO (CRUD UI)
-// =======================
 function renderHistorico(lista) {
-
   const el = document.getElementById("historico");
 
-  el.innerHTML = lista.slice(-10).reverse().map(item => `
+  const ultimos = lista.slice(-10).reverse();
+
+  el.innerHTML = ultimos.map(item => `
     <div class="item">
       <strong>${item.Descrição}</strong>
       R$ ${item.Valor} • ${item.Categoria}
 
-      <div style="margin-top:8px; display:flex; gap:5px;">
-        <button onclick="editar(${item.ID}, '${item.Descrição}', '${item.Categoria}', '${item.Pagamento}', ${item.Valor})">✏️</button>
-        <button onclick="deletar(${item.ID})" style="background:#e53935;">🗑️</button>
+      <div class="actions">
+        <button class="edit" onclick="editar(${item.ID})">Editar</button>
+        <button class="delete" onclick="deletar(${item.ID})">Del</button>
       </div>
     </div>
   `).join("");
 }
 
-// =======================
-// ✏️ EDITAR
-// =======================
-function editar(id, desc, categoria, pagamento, valor) {
+// EDITAR
+function editar(id) {
+  const novaDesc = prompt("Nova descrição:");
+  const novoValor = prompt("Novo valor:");
 
-  document.getElementById("desc").value = desc;
-  document.getElementById("categoria").value = categoria;
-  document.getElementById("pagamento").value = pagamento;
-  document.querySelector('input[type="number"]').value = valor;
-
-  editandoId = id;
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "edit",
+      id,
+      descricao: novaDesc,
+      valor: parseFloat(novoValor)
+    })
+  }).then(carregar);
 }
 
-// =======================
-// 🗑️ DELETAR
-// =======================
-async function deletar(id) {
+// DELETAR
+function deletar(id) {
+  if (!confirm("Deseja excluir?")) return;
 
-  if (!confirm("Deseja deletar?")) return;
-
-  await fetch(API, {
-    method: "DELETE",
-    body: JSON.stringify({ id })
-  });
-
-  carregar();
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "delete",
+      id
+    })
+  }).then(carregar);
 }
 
-// =======================
-// 🧹 LIMPAR
-// =======================
-function limparCampos() {
-  document.getElementById("desc").value = "";
-  document.querySelector('input[type="number"]').value = "";
-}
-
-// INIT
 carregar();

@@ -1,167 +1,195 @@
 <!doctype html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#4CAF50" />
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#4CAF50" />
 
-    <title>AUTOZAP GFIN</title>
+<title>AUTOZAP GFIN</title>
 
-    <link rel="manifest" href="manifest.json" />
-    <link rel="icon" href="favicon.ico" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="favicon.ico" />
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-      * {
-        box-sizing: border-box;
-      }
+<style>
+* { box-sizing: border-box; }
 
-      body {
-        font-family: Arial, sans-serif;
-        background: #f4f6f8;
-        margin: 0;
-        padding: 15px;
-      }
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 10px;
+}
 
-      h2 {
-        text-align: center;
-      }
+/* CONTAINER */
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding-bottom: 80px;
+}
 
-      /* 🔥 CONTAINER */
-      .container {
-        max-width: 600px;
-        margin: auto;
-      }
+/* CARDS */
+.card {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+}
 
-      /* 🔥 CARDS */
-      .card {
-        background: white;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-radius: 12px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      }
+/* INPUTS */
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
 
-      /* 🔥 INPUTS */
-      input,
-      select,
-      button {
-        width: 100%;
-        padding: 12px;
-        margin-top: 10px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        font-size: 14px;
-      }
+/* BOTÃO */
+button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  font-weight: bold;
+}
 
-      /* 🔥 BOTÃO */
-      button {
-        background: #4caf50;
-        color: white;
-        border: none;
-        font-weight: bold;
-        cursor: pointer;
-      }
+/* HISTÓRICO */
+.item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
 
-      button:hover {
-        background: #43a047;
-      }
+.item strong {
+  display: block;
+}
 
-      /* 🔥 HISTÓRICO */
-      .item {
-        padding: 10px;
-        border-bottom: 1px solid #eee;
-        font-size: 14px;
-      }
+/* BOTÕES CRUD */
+.actions {
+  margin-top: 5px;
+  display: flex;
+  gap: 5px;
+}
 
-      .item strong {
-        display: block;
-      }
+.actions button {
+  flex: 1;
+  padding: 5px;
+  font-size: 12px;
+  border-radius: 6px;
+}
 
-      /* 🔥 RESPONSIVO */
-      @media (max-width: 480px) {
-        body {
-          padding: 10px;
-        }
+.edit { background: #2196F3; }
+.delete { background: #f44336; }
 
-        h2 {
-          font-size: 20px;
-        }
-      }
-    </style>
-  </head>
+/* NAVBAR PWA */
+.navbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid #ddd;
+  padding: 10px 0;
+}
 
-  <body>
-    <div class="container">
-      <h2>💰 AUTOZAP GFIN</h2>
+.navbar button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #555;
+}
 
-      <!-- FORM -->
-      <div class="card">
-        <input id="desc" placeholder="Descrição" />
+/* RESPONSIVO */
+@media (max-width: 480px) {
+  .actions button {
+    font-size: 11px;
+    padding: 4px;
+  }
+}
+</style>
+</head>
 
-        <select id="pagamento">
-          <option>Pix</option>
-          <option>Cartão</option>
-          <option>Dinheiro</option>
-        </select>
+<body>
 
-        <select id="categoria">
-          <option>Alimentação</option>
-          <option>Lanche</option>
-          <option>Saúde</option>
-          <option>Transporte</option>
-          <option>Doação</option>
-          <option>Lazer</option>
-          <option>Outros</option>
-          <option>Roupas</option>
-          <option>Educação</option>
-        </select>
+<div class="container">
 
-        <!--<input id="valor" type="number" placeholder="Valor" />-->
-        <div class="input-group">
-          <span class="input-group-text">R$</span>
-          <input type="number" step="0.01" class="form-control" />
-        </div>
+<h2>💰 AUTOZAP GFIN</h2>
 
-        <button onclick="enviar()">Salvar</button>
-      </div>
+<!-- GRÁFICO -->
+<div class="card" id="graficoCard">
+  <canvas id="grafico"></canvas>
+</div>
 
-      <!-- GRÁFICO -->
-      <div class="card">
-        <canvas id="grafico"></canvas>
-      </div>
+<!-- FORM -->
+<div class="card">
+  <input id="desc" placeholder="Descrição" />
 
-      <!-- HISTÓRICO -->
-      <div class="card">
-        <h3>📄 Últimas Transações</h3>
-        <div id="historico"></div>
-      </div>
-    </div>
+  <select id="pagamento">
+    <option>Pix</option>
+    <option>Cartão</option>
+    <option>Dinheiro</option>
+  </select>
 
-    <script src="app.js"></script>
+  <select id="categoria">
+    <option>Alimentação</option>
+    <option>Lanche</option>
+    <option>Saúde</option>
+    <option>Transporte</option>
+    <option>Doação</option>
+    <option>Lazer</option>
+    <option>Outros</option>
+    <option>Roupas</option>
+    <option>Educação</option>
+  </select>
 
-    <script>
-      /* =======================
-   🔄 AUTO ATUALIZAÇÃO
-======================= */
+  <input id="valor" type="number" placeholder="Valor" />
 
-      // atualiza a cada 10 segundos
-      setInterval(() => {
-        if (typeof carregar === "function") {
-          carregar();
-        }
-      }, 10000);
+  <button onclick="enviar()">Salvar</button>
+</div>
 
-      /* =======================
-   📲 SERVICE WORKER
-======================= */
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("service-worker.js")
-          .then(() => console.log("SW ativo"))
-          .catch((err) => console.log("SW erro:", err));
-      }
-    </script>
-  </body>
+<!-- HISTÓRICO -->
+<div class="card" id="historicoCard">
+  <h3>📄 Últimas Transações</h3>
+  <div id="historico"></div>
+</div>
+
+</div>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <button onclick="scrollToTop()">🏠</button>
+  <button onclick="scrollToGrafico()">📊</button>
+  <button onclick="scrollToHistorico()">📄</button>
+</div>
+
+<script src="app.js"></script>
+
+<script>
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function scrollToGrafico() {
+  document.getElementById("graficoCard").scrollIntoView({ behavior: "smooth" });
+}
+
+function scrollToHistorico() {
+  document.getElementById("historicoCard").scrollIntoView({ behavior: "smooth" });
+}
+
+// AUTO UPDATE
+setInterval(() => {
+  if (typeof carregar === "function") carregar();
+}, 10000);
+
+// SERVICE WORKER
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
 </html>
