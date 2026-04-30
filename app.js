@@ -70,7 +70,7 @@ function renderHistorico(lista) {
 
       <div class="actions">
         <button class="edit" onclick="editar(${item.ID})">Editar</button>
-        <button class="delete" onclick="deletar(${item.ID})">Del</button>
+        <button class="delete" onclick="deletar(${item.ID})">Deletar</button>
       </div>
     </div>
   `).join("");
