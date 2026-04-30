@@ -115,7 +115,12 @@ button:hover {
       <option>Contas</option>
     </select>
 
-    <input id="valor" type="number" placeholder="Valor" />
+    <!--<input id="valor" type="number" placeholder="Valor" />-->
+    <div class="input-group">
+    <span class="input-group-text">R$</span>
+    <input type="number" step="0.01" class="form-control">
+</div>
+
 
     <button onclick="enviar()">Salvar</button>
   </div>
