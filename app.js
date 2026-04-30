@@ -18,14 +18,9 @@ async function enviar() {
 }
 
 async function carregar() {
-  try {
-    const res = await fetch(API + "?mode=web");
-    const dados = await res.json();
-
-    console.log("OK:", dados);
-  } catch (e) {
-    console.error("ERRO FETCH:", e);
-  }
+  const res = await fetch(API + "?mode=web");
+  const dados = await res.json();
+  console.log(dados);
 }
 
 carregar();
