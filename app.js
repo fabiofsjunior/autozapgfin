@@ -3,24 +3,39 @@ const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWF
 let telefone = localStorage.getItem("telefone");
 
 // =======================
-// 🔐 LOGIN
+// 🔐 LOGIN SEGURO
 // =======================
-function entrar() {
+async function entrar() {
 
   let input = document.getElementById("telefone").value;
+  let tel = normalizarTelefone(input);
 
-  telefone = normalizarTelefone(input);
-
-  if (!telefone || telefone.length < 10) {
-    alert("Digite um número válido com DDD + 9 + número");
+  if (!tel || tel.length < 10) {
+    alert("Digite um número válido");
     return;
   }
 
-  localStorage.setItem("telefone", telefone);
+  try {
 
-  console.log("LOGIN OK:", telefone);
+    // 🔥 VALIDA NO BACKEND ANTES DE ENTRAR
+    const res = await fetch(API + "?phone=" + tel);
+    const dados = await res.json();
 
-  window.location.href = "dashboard.html";
+    if (!Array.isArray(dados)) {
+      alert("Erro ao validar login");
+      return;
+    }
+
+    // ✅ LOGIN OK
+    localStorage.setItem("telefone", tel);
+
+    console.log("LOGIN VALIDADO:", tel);
+
+    window.location.href = "dashboard.html";
+
+  } catch (e) {
+    alert("Erro de conexão");
+  }
 }
 
 // =======================
@@ -30,24 +45,23 @@ async function carregar() {
 
   telefone = localStorage.getItem("telefone");
 
+  // 🔥 NÃO REDIRECIONA DIRETO
   if (!telefone) {
-    console.log("SEM TELEFONE → REDIRECIONANDO");
-    window.location.href = "index.html";
+    console.log("Sem sessão");
     return;
   }
 
   try {
 
-    const res = await fetch(API + "?phone=" + telefone); // 🔥 CORREÇÃO AQUI
+    const res = await fetch(API + "?phone=" + telefone);
     const dados = await res.json();
 
-    console.log("DADOS:", dados);
+    console.log("API:", dados);
 
-    // 🔥 VALIDAÇÃO REAL
+    // 🔥 SE DER ERRO → LIMPA SESSÃO
     if (!Array.isArray(dados)) {
-      console.log("RESPOSTA INVÁLIDA → LOGOUT");
+      console.log("Sessão inválida");
       localStorage.removeItem("telefone");
-      window.location.href = "index.html";
       return;
     }
 
@@ -57,14 +71,12 @@ async function carregar() {
     renderGrafico(validos);
 
   } catch (err) {
-
-    console.log("ERRO API:", err);
-    alert("Erro ao conectar com servidor");
+    console.log("Erro API:", err);
   }
 }
 
 // =======================
-// 📊 GRÁFICO PIZZA
+// 📊 GRÁFICO
 // =======================
 function renderGrafico(lista) {
 
@@ -98,7 +110,7 @@ function renderHistorico(lista) {
   const el = document.getElementById("historico");
 
   if (!lista || lista.length === 0) {
-    el.innerHTML = "<p>Sem transações ainda</p>";
+    el.innerHTML = "<p>Sem transações</p>";
     return;
   }
 
@@ -129,7 +141,7 @@ function editar(id) {
   fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      phone: telefone, // 🔥 CORREÇÃO
+      phone: telefone,
       action: "update",
       id,
       data: { valor: parseFloat(novo) }
@@ -145,15 +157,13 @@ function deletar(id) {
   fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      phone: telefone, // 🔥 CORREÇÃO
+      phone: telefone,
       action: "delete",
       id
     })
   }).then(carregar);
 }
 
-// =======================
-// 📞 NORMALIZA TELEFONE
 // =======================
 function normalizarTelefone(num) {
 
@@ -162,16 +172,21 @@ function normalizarTelefone(num) {
   if (num.startsWith("55")) num = num.substring(2);
 
   if (num.length === 10) {
-    num = num.substring(0,2) + "9" + num.substring(2);
+    num = num.slice(0,2) + "9" + num.slice(2);
   }
 
   return num;
 }
 
 // =======================
-// 🚀 AUTO LOAD
+// 🚀 LOAD CONTROLADO
 // =======================
 if (window.location.pathname.includes("dashboard")) {
-  carregar();
-  setInterval(carregar, 5000);
+
+  if (!localStorage.getItem("telefone")) {
+    window.location.href = "index.html";
+  } else {
+    carregar();
+    setInterval(carregar, 5000);
+  }
 }
