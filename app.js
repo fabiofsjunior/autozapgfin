@@ -1,149 +1,38 @@
-const API = "SUA_URL_WEBAPP";
-const TOKEN = "TOKEN_INTERNO_123";
+const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
-let TELEFONE = localStorage.getItem("tel");
+let phone = localStorage.getItem("user");
 
-// =======================
-// 📱 NORMALIZAR TELEFONE
-// =======================
-function normalizarTelefone(numero) {
-
-  numero = numero.replace(/\D/g, "");
-
-  if (numero.startsWith("55")) {
-    numero = numero.substring(2);
-  }
-
-  // adiciona 9
-  if (numero.length === 10) {
-    numero = numero.slice(0, 2) + "9" + numero.slice(2);
-  }
-
-  return numero;
+if (!phone) {
+  phone = prompt("Digite seu telefone (DDD + 9 + número)\nEx: 81983402995");
+  localStorage.setItem("user", phone);
 }
 
-// =======================
-// 🔐 LOGIN
-// =======================
-function fazerLogin() {
-
-  let tel = document.getElementById("telefone").value;
-
-  tel = normalizarTelefone(tel);
-
-  if (!tel || tel.length !== 11) {
-    alert("Use formato: 81999999999");
-    return;
-  }
-
-  localStorage.setItem("tel", tel);
-
-  window.location.href = "dashboard.html";
-}
-
-// =======================
-// 🚪 LOGOUT
-// =======================
-function logout() {
-  localStorage.removeItem("tel");
-  window.location.href = "index.html";
-}
-
-// =======================
-// 💾 ENVIAR
-// =======================
-async function enviar() {
-
-  const data = {
-    descricao: desc.value,
-    tipoPagamento: pagamento.value,
-    categoria: categoria.value,
-    valor: parseFloat(valor.value)
-  };
-
-  await fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      token: TOKEN,
-      telefone: TELEFONE,
-      action: "create",
-      data
-    })
-  });
-
-  limpar();
-  carregar();
-}
-
-// =======================
-// 🔄 CARREGAR
-// =======================
 async function carregar() {
 
-  if (!TELEFONE) return;
-
-  const res = await fetch(`${API}?token=${TOKEN}&telefone=${TELEFONE}`);
+  const res = await fetch(API + "?phone=" + phone);
   const dados = await res.json();
 
-  const lista = dados
-    .map(normalizarItem)
-    .filter(i => i.id && i.descricao);
+  const lanc = dados.filter(i => i.ID && i.Valor);
 
-  renderHistorico(lista);
-  renderGrafico(lista);
+  renderGrafico(lanc);
+  renderIA(lanc);
 }
 
-// =======================
-function normalizarItem(i) {
-  return {
-    id: i.ID,
-    descricao: i["Descrição"] || i["Descricao"] || "",
-    valor: parseFloat(i.Valor) || 0,
-    categoria: i.Categoria || "Outros"
-  };
-}
-
-// =======================
-// 📄 HISTÓRICO
-// =======================
-function renderHistorico(lista) {
-
-  const el = document.getElementById("historico");
-
-  el.innerHTML = lista
-    .slice(-50)
-    .reverse()
-    .map(i => `
-      <div class="item">
-        <strong>${i.descricao}</strong>
-        <div>R$ ${i.valor.toFixed(2)}</div>
-        <small>${i.categoria}</small>
-
-        <div class="acoes">
-          <button onclick="editar(${i.id})">✏️</button>
-          <button onclick="deletar(${i.id})">🗑️</button>
-        </div>
-      </div>
-    `).join("");
-}
-
-// =======================
-// 📊 GRÁFICO PIZZA
-// =======================
 function renderGrafico(lista) {
 
   let resumo = {};
 
   lista.forEach(i => {
-    if (!i.categoria) return;
+    const cat = i.Categoria || "Outros";
+    const val = parseFloat(i.Valor) || 0;
 
-    if (!resumo[i.categoria]) resumo[i.categoria] = 0;
-    resumo[i.categoria] += i.valor;
+    if (!resumo[cat]) resumo[cat] = 0;
+    resumo[cat] += val;
   });
 
-  const ctx = document.getElementById("grafico");
-
   if (window.chart) window.chart.destroy();
+
+  const ctx = document.getElementById("grafico");
 
   window.chart = new Chart(ctx, {
     type: "pie",
@@ -156,51 +45,16 @@ function renderGrafico(lista) {
   });
 }
 
-// =======================
-// ✏️ EDITAR
-// =======================
-function editar(id) {
+function renderIA(lista) {
 
-  const valor = prompt("Novo valor:");
+  let total = 0;
+  lista.forEach(i => total += parseFloat(i.Valor) || 0);
 
-  if (!valor) return;
-
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      token: TOKEN,
-      telefone: TELEFONE,
-      action: "update",
-      id,
-      data: { valor: parseFloat(valor) }
-    })
-  }).then(carregar);
+  document.getElementById("analise").innerHTML = `
+    💸 Total gasto: R$ ${total.toFixed(2)} <br>
+    📊 Transações: ${lista.length}
+  `;
 }
 
-// =======================
-// 🗑️ DELETAR
-// =======================
-function deletar(id) {
-
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      token: TOKEN,
-      telefone: TELEFONE,
-      action: "delete",
-      id
-    })
-  }).then(carregar);
-}
-
-// =======================
-function limpar() {
-  desc.value = "";
-  valor.value = "";
-}
-
-// =======================
-if (window.location.pathname.includes("dashboard")) {
-  carregar();
-  setInterval(carregar, 5000);
-}
+carregar();
+setInterval(carregar, 5000);
