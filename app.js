@@ -1,155 +1,135 @@
-const API =
+  const API =
   "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
+  
+const TOKEN = "MEU_TOKEN_SEGURO_123";
 
+// 🔥 SIMULA LOGIN (depois vira autenticação real)
+const USER = localStorage.getItem("user") || prompt("Digite seu telefone:");
+localStorage.setItem("user", USER);
 
-let ultimaVersao = null;
-
-// =======================
-// ➕ CRIAR
 // =======================
 async function enviar() {
 
   const data = {
-    action: "create",
     descricao: desc.value,
-    pagamento: pagamento.value,
+    tipoPagamento: pagamento.value,
     categoria: categoria.value,
     valor: parseFloat(valor.value)
   };
 
   await fetch(API, {
     method: "POST",
-    body: JSON.stringify(data)
+    body: JSON.stringify({
+      token: TOKEN,
+      user: USER,
+      action: "create",
+      data
+    })
   });
 
-  limparCampos();
+  limpar();
   carregar();
 }
 
 // =======================
-// 🔄 CARREGAR
-// =======================
 async function carregar() {
 
-  const res = await fetch(API + "?mode=web");
+  const res = await fetch(`${API}?token=${TOKEN}&user=${USER}`);
   const dados = await res.json();
 
-  const lista = dados.slice(-50).reverse();
-
-  renderHistorico(lista);
-  renderGrafico(lista);
+  renderGrafico(dados);
+  renderHistorico(dados);
 }
 
 // =======================
-// ⚡ TEMPO REAL (FAKE)
-// =======================
-setInterval(async () => {
+// 📊 GRÁFICO PIZZA (NUBANK STYLE)
+function renderGrafico(lista){
 
-  try {
-    const res = await fetch(API + "?mode=check");
-    const data = await res.json();
+  let resumo = {};
 
-    if (ultimaVersao !== data.version) {
-      ultimaVersao = data.version;
-      carregar();
+  lista.forEach(i=>{
+    if(!resumo[i.Categoria]) resumo[i.Categoria]=0;
+    resumo[i.Categoria]+=parseFloat(i.Valor)||0;
+  });
+
+  const labels = Object.keys(resumo);
+  const valores = Object.values(resumo);
+
+  if(window.chart) window.chart.destroy();
+
+  const ctx = document.getElementById("grafico");
+
+  window.chart = new Chart(ctx,{
+    type:"doughnut",
+    data:{
+      labels,
+      datasets:[{
+        data: valores
+      }]
+    },
+    options:{
+      plugins:{
+        legend:{ position:"bottom" }
+      }
     }
-
-  } catch (e) {
-    console.log("Erro check:", e);
-  }
-
-}, 5000);
+  });
+}
 
 // =======================
-// 📄 HISTÓRICO
-// =======================
-function renderHistorico(lista) {
+function editar(id){
+  const novo = prompt("Novo valor:");
+  if(!novo) return;
 
-  historico.innerHTML = lista.map(item => `
+  fetch(API,{
+    method:"POST",
+    body: JSON.stringify({
+      token:TOKEN,
+      user:USER,
+      action:"update",
+      id,
+      data:{ valor:parseFloat(novo) }
+    })
+  }).then(carregar);
+}
+
+// =======================
+function deletar(id){
+
+  fetch(API,{
+    method:"POST",
+    body: JSON.stringify({
+      token:TOKEN,
+      user:USER,
+      action:"delete",
+      id
+    })
+  }).then(carregar);
+}
+
+// =======================
+function renderHistorico(lista){
+
+  const el = document.getElementById("historico");
+
+  el.innerHTML = lista.slice(-50).reverse().map(i=>`
     <div class="item">
-      <div>
-        <strong>${item.Descrição}</strong>
-        <br>R$ ${item.Valor} • ${item.Categoria}
-      </div>
-
+      <strong>${i.Descrição}</strong>
+      R$ ${i.Valor}
+      <small>${i.Categoria}</small>
       <div class="acoes">
-        <button class="btn edit" onclick="editar(${item.ID})">✏️</button>
-        <button class="btn del" onclick="deletar(${item.ID})">🗑</button>
+        <button onclick="editar(${i.ID})">✏️</button>
+        <button onclick="deletar(${i.ID})">🗑️</button>
       </div>
     </div>
   `).join("");
 }
 
 // =======================
-// ✏️ EDITAR
-// =======================
-async function editar(id) {
-
-  const descricao = prompt("Nova descrição:");
-  const valor = prompt("Novo valor:");
-
-  await fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "update",
-      id,
-      descricao,
-      valor
-    })
-  });
-
-  carregar();
-}
-
-// =======================
-// 🗑 DELETE
-// =======================
-async function deletar(id) {
-
-  if (!confirm("Deseja deletar?")) return;
-
-  await fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "delete",
-      id
-    })
-  });
-
-  carregar();
-}
-
-// =======================
-function limparCampos() {
-  desc.value = "";
-  valor.value = "";
-}
-
-// =======================
-// 📊 GRÁFICO
-// =======================
-function renderGrafico(lista) {
-
-  let resumo = {};
-
-  lista.forEach(item => {
-    const cat = item.Categoria;
-    resumo[cat] = (resumo[cat] || 0) + Number(item.Valor);
-  });
-
-  if (window.chart) window.chart.destroy();
-
-  window.chart = new Chart(grafico, {
-    type: "bar",
-    data: {
-      labels: Object.keys(resumo),
-      datasets: [{
-        label: "Gastos",
-        data: Object.values(resumo)
-      }]
-    }
-  });
+function limpar(){
+  desc.value="";
+  valor.value="";
 }
 
 // =======================
 carregar();
+setInterval(carregar,5000);
