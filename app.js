@@ -1,35 +1,64 @@
 const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
-// =======================
-// 🔐 LOGIN
-// =======================
-let phone = localStorage.getItem("user");
+const TOKEN = "MEU_TOKEN_SEGURO_123";
 
-if (!phone) {
-  phone = prompt(
-    "Digite seu telefone\nFormato: DDD + 9 + número\nEx: 81983402995"
-  );
-  localStorage.setItem("user", phone);
+// =======================
+// 🔐 LOGIN (SEM PROMPT)
+// =======================
+function login() {
+
+  let telefone = document.getElementById("telefone").value;
+
+  telefone = normalizarTelefone(telefone);
+
+  if (!telefone || telefone.length < 10) {
+    alert("Digite um telefone válido com DDD");
+    return;
+  }
+
+  localStorage.setItem("user_tel", telefone);
+
+  window.location.href = "dashboard.html";
+}
+
+// =======================
+// 📱 NORMALIZAR TELEFONE
+// =======================
+function normalizarTelefone(num) {
+
+  num = num.replace(/\D/g, "");
+
+  if (num.startsWith("55")) num = num.substring(2);
+
+  if (num.length === 10) {
+    num = num.slice(0,2) + "9" + num.slice(2);
+  }
+
+  return num;
 }
 
 // =======================
 // 📥 CARREGAR DADOS
 // =======================
 async function carregar() {
-  try {
 
-    const res = await fetch(API + "?phone=" + phone);
-    const dados = await res.json();
+  const telefone = localStorage.getItem("user_tel");
 
-    const lanc = dados.filter(i => i.ID && i.Valor);
-
-    renderGrafico(lanc);
-    renderHistorico(lanc);
-    renderIA(lanc);
-
-  } catch (e) {
-    console.log("Erro ao carregar:", e);
+  if (!telefone) {
+    window.location.href = "index.html";
+    return;
   }
+
+  const res = await fetch(`${API}?token=${TOKEN}&telefone=${telefone}`);
+  const dados = await res.json();
+
+  console.log("DADOS:", dados);
+
+  const lancamentos = dados.filter(i => i.ID && i.Valor);
+
+  renderHistorico(lancamentos);
+  renderGrafico(lancamentos);
+  gerarAnalise(lancamentos);
 }
 
 // =======================
@@ -47,119 +76,121 @@ function renderGrafico(lista) {
     resumo[cat] += val;
   });
 
+  const labels = Object.keys(resumo);
+  const valores = Object.values(resumo);
+
   if (window.chart) window.chart.destroy();
 
   const ctx = document.getElementById("grafico");
 
-  if (!ctx) return;
-
   window.chart = new Chart(ctx, {
-    type: "pie",
+    type: "doughnut",
     data: {
-      labels: Object.keys(resumo),
+      labels,
       datasets: [{
-        data: Object.values(resumo)
+        data: valores
       }]
     }
   });
 }
 
 // =======================
-// 📄 HISTÓRICO + CRUD
+// 📄 HISTÓRICO
 // =======================
 function renderHistorico(lista) {
 
   const el = document.getElementById("historico");
-  if (!el) return;
 
-  const ultimos = lista.slice(-50).reverse();
+  const validos = lista.filter(i => i.ID);
 
-  el.innerHTML = ultimos.map(item => {
-
-    if (!item.ID || !item.Valor) return "";
-
-    return `
-      <div class="item">
-        <strong>${item.Descrição}</strong>
-        <div>R$ ${parseFloat(item.Valor).toFixed(2)}</div>
-        <small>${item.Categoria}</small>
-
-        <div class="acoes">
-          <button onclick="editar(${item.ID})">✏️</button>
-          <button onclick="deletar(${item.ID})">🗑️</button>
-        </div>
+  el.innerHTML = validos.slice(-50).reverse().map(i => `
+    <div class="item">
+      
+      <div class="info">
+        <strong>${i.Descrição}</strong>
+        <span>R$ ${parseFloat(i.Valor).toFixed(2)}</span>
       </div>
-    `;
-  }).join("");
+
+      <div class="acoes">
+        <button onclick="editar(${i.ID})">✏️</button>
+        <button onclick="deletar(${i.ID})">🗑️</button>
+      </div>
+
+    </div>
+  `).join("");
 }
 
 // =======================
 // ✏️ EDITAR
 // =======================
-function editar(id) {
+async function editar(id) {
 
-  const novoValor = prompt("Novo valor:");
-  if (!novoValor) return;
+  const telefone = localStorage.getItem("user_tel");
 
-  fetch(API, {
+  const novo = prompt("Novo valor:");
+  if (!novo) return;
+
+  await fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      phone: phone,
+      token: TOKEN,
+      telefone,
       action: "update",
-      id: id,
-      data: {
-        valor: parseFloat(novoValor)
-      }
+      id,
+      data: { valor: parseFloat(novo) }
     })
-  }).then(() => carregar());
+  });
+
+  carregar();
 }
 
 // =======================
 // 🗑️ DELETAR
 // =======================
-function deletar(id) {
+async function deletar(id) {
 
-  if (!confirm("Deseja excluir?")) return;
+  const telefone = localStorage.getItem("user_tel");
 
-  fetch(API, {
+  await fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      phone: phone,
+      token: TOKEN,
+      telefone,
       action: "delete",
-      id: id
+      id
     })
-  }).then(() => carregar());
+  });
+
+  carregar();
 }
 
 // =======================
-// 🤖 IA RESUMO
+// 🧠 ANALISE IA (LOCAL)
 // =======================
-function renderIA(lista) {
+function gerarAnalise(lista) {
 
   let total = 0;
   let categorias = {};
 
   lista.forEach(i => {
-    const val = parseFloat(i.Valor) || 0;
-    total += val;
+    const v = parseFloat(i.Valor) || 0;
+    total += v;
 
-    const cat = i.Categoria || "Outros";
-
-    if (!categorias[cat]) categorias[cat] = 0;
-    categorias[cat] += val;
+    if (!categorias[i.Categoria]) categorias[i.Categoria] = 0;
+    categorias[i.Categoria] += v;
   });
 
-  let maior = Object.entries(categorias).sort((a,b)=>b[1]-a[1])[0];
+  const maior = Object.keys(categorias).reduce((a, b) =>
+    categorias[a] > categorias[b] ? a : b
+  , "Outros");
 
   document.getElementById("analise").innerHTML = `
-    💸 Total gasto: R$ ${total.toFixed(2)} <br>
-    📊 Transações: ${lista.length} <br>
-    🔥 Maior gasto: ${maior ? maior[0] : "-"}
+    💸 Total gasto: <b>R$ ${total.toFixed(2)}</b><br>
+    📊 Maior categoria: <b>${maior}</b><br>
+    ⚠️ Dica: reduzir ${maior}
   `;
 }
 
-// =======================
-// 🔄 AUTO UPDATE
 // =======================
 carregar();
 setInterval(carregar, 5000);
