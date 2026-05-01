@@ -1,47 +1,69 @@
 const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
-let telefone = localStorage.getItem("telefone");
-
+// =======================
 // 🔐 LOGIN
+// =======================
 function entrar() {
 
   let input = document.getElementById("telefone").value;
 
-  telefone = normalizarTelefone(input);
-
-  if (!telefone) {
-    alert("Digite um número válido");
+  if (!input) {
+    alert("Digite seu telefone");
     return;
   }
 
+  const telefone = normalizarTelefone(input);
+
   localStorage.setItem("telefone", telefone);
 
-  window.location.href = "dashboard.html";
+  // 🔥 PASSA VIA URL (ANTI LOOP)
+  window.location.href = "dashboard.html?telefone=" + telefone;
 }
 
 // =======================
-// 📊 DASHBOARD LOAD
+// 📊 LOAD DASHBOARD
 // =======================
 async function carregar() {
 
-  telefone = localStorage.getItem("telefone");
+  // 🔥 PEGA DA URL PRIMEIRO
+  const params = new URLSearchParams(window.location.search);
+  let telefone = params.get("telefone");
 
+  // 🔥 FALLBACK LOCALSTORAGE
   if (!telefone) {
+    telefone = localStorage.getItem("telefone");
+  }
+
+  console.log("TELEFONE:", telefone);
+
+  // 🔒 VALIDAÇÃO FORTE
+  if (!telefone || telefone === "null" || telefone === "undefined") {
     window.location.href = "index.html";
     return;
   }
 
-  const res = await fetch(API + "?telefone=" + telefone);
-  const dados = await res.json();
+  // 🔥 GARANTE PERSISTÊNCIA
+  localStorage.setItem("telefone", telefone);
 
-  const validos = dados.filter(i => i.ID && i.Valor);
+  try {
 
-  renderHistorico(validos);
-  renderGrafico(validos);
+    const res = await fetch(API + "?phone=" + telefone);
+    const dados = await res.json();
+
+    console.log("DADOS:", dados);
+
+    const validos = (dados || []).filter(i => i.ID && i.Valor);
+
+    renderHistorico(validos);
+    renderGrafico(validos);
+
+  } catch (e) {
+    console.log("ERRO:", e);
+  }
 }
 
 // =======================
-// 📊 GRÁFICO PIZZA
+// 📊 GRÁFICO
 // =======================
 function renderGrafico(lista) {
 
@@ -94,19 +116,20 @@ function renderHistorico(lista) {
 // =======================
 function editar(id) {
 
-  const novo = prompt("Novo valor:");
+  const telefone = localStorage.getItem("telefone");
 
+  const novo = prompt("Novo valor:");
   if (!novo) return;
 
   fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      telefone,
+      phone: telefone,
       action: "update",
       id,
       data: { valor: parseFloat(novo) }
     })
-  }).then(carregar);
+  }).then(() => carregar());
 }
 
 // =======================
@@ -114,16 +137,20 @@ function editar(id) {
 // =======================
 function deletar(id) {
 
+  const telefone = localStorage.getItem("telefone");
+
   fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      telefone,
+      phone: telefone,
       action: "delete",
       id
     })
-  }).then(carregar);
+  }).then(() => carregar());
 }
 
+// =======================
+// 📞 NORMALIZA TELEFONE
 // =======================
 function normalizarTelefone(num) {
 
@@ -132,14 +159,20 @@ function normalizarTelefone(num) {
   if (num.startsWith("55")) num = num.substring(2);
 
   if (num.length === 10) {
-    num = num.substring(0,2) + "9" + num.substring(2);
+    num = num.slice(0,2) + "9" + num.slice(2);
   }
 
   return num;
 }
 
-// AUTO LOAD
+// =======================
+// 🚀 AUTO LOAD
+// =======================
 if (window.location.pathname.includes("dashboard")) {
-  carregar();
-  setInterval(carregar, 5000);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    carregar();
+    setInterval(carregar, 5000);
+  });
+
 }
