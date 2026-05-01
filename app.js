@@ -1,12 +1,24 @@
-  const API =
-  "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
-  
-const TOKEN = "MEU_TOKEN_SEGURO_123";
+const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
-// 🔥 SIMULA LOGIN (depois vira autenticação real)
-const USER = localStorage.getItem("user") || prompt("Digite seu telefone:");
-localStorage.setItem("user", USER);
+let telefone = localStorage.getItem("tel");
 
+// =======================
+// 🔐 LOGIN
+// =======================
+if (!telefone) {
+  telefone = prompt("Digite seu telefone (ex: 81999999999)");
+  localStorage.setItem("tel", telefone);
+}
+
+// 🔐 GERAR TOKEN
+function gerarToken(tel) {
+  return btoa(tel + "AUTOZAP_CHAVE_SECRETA_2026");
+}
+
+const TOKEN = gerarToken(telefone);
+
+// =======================
+// 💾 ENVIAR
 // =======================
 async function enviar() {
 
@@ -20,8 +32,8 @@ async function enviar() {
   await fetch(API, {
     method: "POST",
     body: JSON.stringify({
+      telefone,
       token: TOKEN,
-      user: USER,
       action: "create",
       data
     })
@@ -32,90 +44,64 @@ async function enviar() {
 }
 
 // =======================
+// 📊 CARREGAR
+// =======================
 async function carregar() {
 
-  const res = await fetch(`${API}?token=${TOKEN}&user=${USER}`);
+  const res = await fetch(`${API}?telefone=${telefone}&token=${TOKEN}`);
   const dados = await res.json();
 
-  renderGrafico(dados);
   renderHistorico(dados);
+  renderGrafico(dados);
 }
 
 // =======================
-// 📊 GRÁFICO PIZZA (NUBANK STYLE)
-function renderGrafico(lista){
-
-  let resumo = {};
-
-  lista.forEach(i=>{
-    if(!resumo[i.Categoria]) resumo[i.Categoria]=0;
-    resumo[i.Categoria]+=parseFloat(i.Valor)||0;
-  });
-
-  const labels = Object.keys(resumo);
-  const valores = Object.values(resumo);
-
-  if(window.chart) window.chart.destroy();
-
-  const ctx = document.getElementById("grafico");
-
-  window.chart = new Chart(ctx,{
-    type:"doughnut",
-    data:{
-      labels,
-      datasets:[{
-        data: valores
-      }]
-    },
-    options:{
-      plugins:{
-        legend:{ position:"bottom" }
-      }
-    }
-  });
-}
-
+// ✏️ EDITAR
 // =======================
-function editar(id){
+function editar(id) {
+
   const novo = prompt("Novo valor:");
-  if(!novo) return;
+  if (!novo) return;
 
-  fetch(API,{
-    method:"POST",
+  fetch(API, {
+    method: "POST",
     body: JSON.stringify({
-      token:TOKEN,
-      user:USER,
-      action:"update",
+      telefone,
+      token: TOKEN,
+      action: "update",
       id,
-      data:{ valor:parseFloat(novo) }
+      data: { valor: parseFloat(novo) }
     })
   }).then(carregar);
 }
 
 // =======================
-function deletar(id){
+// 🗑️ DELETAR
+// =======================
+function deletar(id) {
 
-  fetch(API,{
-    method:"POST",
+  fetch(API, {
+    method: "POST",
     body: JSON.stringify({
-      token:TOKEN,
-      user:USER,
-      action:"delete",
+      telefone,
+      token: TOKEN,
+      action: "delete",
       id
     })
   }).then(carregar);
 }
 
 // =======================
-function renderHistorico(lista){
+// 📄 HISTÓRICO
+// =======================
+function renderHistorico(lista) {
 
   const el = document.getElementById("historico");
 
-  el.innerHTML = lista.slice(-50).reverse().map(i=>`
+  el.innerHTML = lista.slice(-50).reverse().map(i => `
     <div class="item">
       <strong>${i.Descrição}</strong>
       R$ ${i.Valor}
-      <small>${i.Categoria}</small>
       <div class="acoes">
         <button onclick="editar(${i.ID})">✏️</button>
         <button onclick="deletar(${i.ID})">🗑️</button>
@@ -125,11 +111,38 @@ function renderHistorico(lista){
 }
 
 // =======================
+// 📊 GRÁFICO (PIZZA)
+// =======================
+function renderGrafico(lista) {
+
+  let resumo = {};
+
+  lista.forEach(i => {
+    const cat = i.Categoria || "Outros";
+    resumo[cat] = (resumo[cat] || 0) + Number(i.Valor);
+  });
+
+  const ctx = document.getElementById("grafico");
+
+  if (window.chart) window.chart.destroy();
+
+  window.chart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(resumo),
+      datasets: [{
+        data: Object.values(resumo)
+      }]
+    }
+  });
+}
+
+// =======================
 function limpar(){
-  desc.value="";
-  valor.value="";
+  desc.value = "";
+  valor.value = "";
 }
 
 // =======================
 carregar();
-setInterval(carregar,5000);
+setInterval(carregar, 5000);
