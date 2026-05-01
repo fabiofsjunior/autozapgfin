@@ -1,5 +1,6 @@
 const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
+
 let telefone = localStorage.getItem("tel");
 
 // =======================
