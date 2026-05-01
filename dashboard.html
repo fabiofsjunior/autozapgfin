@@ -3,10 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard</title>
+<title>AUTOZAP GFIN</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* NAVBAR estilo Nubank */
+.navbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid #ddd;
+  padding: 10px;
+}
+
+.navbar button {
+  background: none;
+  border: none;
+  font-size: 18px;
+}
+
+.historico {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.acoes {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.acoes button {
+  font-size: 12px;
+  padding: 5px 8px;
+}
+</style>
 
 </head>
 
@@ -14,15 +51,31 @@
 
 <div class="container">
 
-<h2>📊 Dashboard Financeiro</h2>
+<h2>💰 AUTOZAP GFIN</h2>
 
-<canvas id="grafico"></canvas>
-
+<!-- GRÁFICO -->
 <div class="card">
-  <h3>🤖 Análise Inteligente</h3>
+  <canvas id="grafico"></canvas>
+</div>
+
+<!-- IA -->
+<div class="card">
+  <h3>🤖 Análise</h3>
   <div id="analise"></div>
 </div>
 
+<!-- HISTÓRICO -->
+<div class="card">
+  <h3>📄 Últimas Transações</h3>
+  <div id="historico" class="historico"></div>
+</div>
+
+</div>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <button onclick="location.href='index.html'">🏠</button>
+  <button onclick="location.href='dashboard.html'">📊</button>
 </div>
 
 <script src="app.js"></script>
