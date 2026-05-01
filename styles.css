@@ -1,157 +1,61 @@
-/* RESET */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* BASE */
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f5f7fb;
-  color: #333;
-  padding-bottom: 80px;
+  font-family: Arial;
+  background: #f4f6f8;
+  margin: 0;
 }
 
-/* CONTAINER */
 .container {
   max-width: 600px;
   margin: auto;
   padding: 15px;
 }
 
-/* HEADER */
-h2 {
-  text-align: center;
-  margin-bottom: 15px;
-  color: #2e7d32;
-}
-
-/* CARDS */
-.card {
-  background: #fff;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 14px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-/* INPUTS */
-input, select {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-}
-
-/* INPUT R$ */
-.input-group {
+.center {
   display: flex;
+  justify-content: center;
   align-items: center;
+  height: 100vh;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 12px;
   margin-top: 10px;
 }
 
-.input-group span {
-  padding: 12px;
-  background: #eee;
-  border-radius: 10px 0 0 10px;
-}
-
-.input-group input {
-  border-radius: 0 10px 10px 0;
-  border-left: none;
-}
-
-/* BOTÃO */
 button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 12px;
-  border-radius: 10px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-.btn-primary {
   background: #4caf50;
   color: white;
+  border: none;
 }
 
-/* HISTÓRICO */
-#historico {
+.item {
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+}
+
+.acoes button {
+  width: auto;
+  margin-right: 5px;
+}
+
+.scroll {
   max-height: 300px;
   overflow-y: auto;
-}
-
-/* ITEM */
-.item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 5px;
-  border-bottom: 1px solid #eee;
-}
-
-/* AÇÕES */
-.acoes {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-/* BOTÕES CRUD */
-.btn {
-  padding: 6px 8px;
-  font-size: 12px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-}
-
-.edit {
-  background: #2196f3;
-  color: white;
-}
-
-.del {
-  background: #f44336;
-  color: white;
 }
 
 .navbar {
   position: fixed;
   bottom: 0;
   width: 100%;
-  background: #111;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-}
-
-.navbar button {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 20px;
-}
-
-/* RESPONSIVO */
-@media (max-width: 480px) {
-  .item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .acoes {
-    flex-direction: row;
-    margin-top: 5px;
-  }
+  background: white;
+  padding: 10px;
+  text-align: center;
 }

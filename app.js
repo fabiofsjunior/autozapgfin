@@ -1,68 +1,98 @@
-const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
+const API = "SUA_URL_WEBAPP";
 const TOKEN = "TOKEN_INTERNO_123";
 
-let TELEFONE = localStorage.getItem("tel") || "";
+let TELEFONE = localStorage.getItem("tel");
 
 // =======================
-// 📱 NORMALIZA TELEFONE
+// 📱 NORMALIZAR TELEFONE
 // =======================
 function normalizarTelefone(numero) {
+
   numero = numero.replace(/\D/g, "");
-  if (numero.startsWith("55")) numero = numero.substring(2);
+
+  if (numero.startsWith("55")) {
+    numero = numero.substring(2);
+  }
+
+  // adiciona 9
+  if (numero.length === 10) {
+    numero = numero.slice(0, 2) + "9" + numero.slice(2);
+  }
+
   return numero;
 }
 
 // =======================
 // 🔐 LOGIN
 // =======================
-function login() {
-  let tel = prompt("Digite seu telefone (DDD + número)\nEx: 81999999999");
+function fazerLogin() {
+
+  let tel = document.getElementById("telefone").value;
 
   tel = normalizarTelefone(tel);
 
-  if (!tel || tel.length < 10) {
-    alert("Telefone inválido");
+  if (!tel || tel.length !== 11) {
+    alert("Use formato: 81999999999");
     return;
   }
 
   localStorage.setItem("tel", tel);
-  TELEFONE = tel;
 
+  window.location.href = "dashboard.html";
+}
+
+// =======================
+// 🚪 LOGOUT
+// =======================
+function logout() {
+  localStorage.removeItem("tel");
+  window.location.href = "index.html";
+}
+
+// =======================
+// 💾 ENVIAR
+// =======================
+async function enviar() {
+
+  const data = {
+    descricao: desc.value,
+    tipoPagamento: pagamento.value,
+    categoria: categoria.value,
+    valor: parseFloat(valor.value)
+  };
+
+  await fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      token: TOKEN,
+      telefone: TELEFONE,
+      action: "create",
+      data
+    })
+  });
+
+  limpar();
   carregar();
 }
 
 // =======================
-// 🔄 CARREGAR DADOS
+// 🔄 CARREGAR
 // =======================
 async function carregar() {
 
-  if (!TELEFONE) return login();
+  if (!TELEFONE) return;
 
-  try {
-    const res = await fetch(`${API}?token=${TOKEN}&telefone=${TELEFONE}`);
+  const res = await fetch(`${API}?token=${TOKEN}&telefone=${TELEFONE}`);
+  const dados = await res.json();
 
-    const dados = await res.json();
+  const lista = dados
+    .map(normalizarItem)
+    .filter(i => i.id && i.descricao);
 
-    console.log("DADOS BRUTOS:", dados);
-
-    if (!Array.isArray(dados)) {
-      console.error("Resposta inválida:", dados);
-      return;
-    }
-
-    const lista = dados
-      .map(normalizarItem)
-      .filter(i => i.id && i.descricao);
-
-    renderHistorico(lista);
-
-  } catch (e) {
-    console.error("Erro ao carregar:", e);
-  }
+  renderHistorico(lista);
+  renderGrafico(lista);
 }
 
-// =======================
-// 🔄 NORMALIZA ITEM
 // =======================
 function normalizarItem(i) {
   return {
@@ -80,11 +110,6 @@ function renderHistorico(lista) {
 
   const el = document.getElementById("historico");
 
-  if (!lista.length) {
-    el.innerHTML = "<p>Nenhuma transação encontrada</p>";
-    return;
-  }
-
   el.innerHTML = lista
     .slice(-50)
     .reverse()
@@ -99,10 +124,83 @@ function renderHistorico(lista) {
           <button onclick="deletar(${i.id})">🗑️</button>
         </div>
       </div>
-    `)
-    .join("");
+    `).join("");
 }
 
 // =======================
-carregar();
-setInterval(carregar, 5000);
+// 📊 GRÁFICO PIZZA
+// =======================
+function renderGrafico(lista) {
+
+  let resumo = {};
+
+  lista.forEach(i => {
+    if (!i.categoria) return;
+
+    if (!resumo[i.categoria]) resumo[i.categoria] = 0;
+    resumo[i.categoria] += i.valor;
+  });
+
+  const ctx = document.getElementById("grafico");
+
+  if (window.chart) window.chart.destroy();
+
+  window.chart = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: Object.keys(resumo),
+      datasets: [{
+        data: Object.values(resumo)
+      }]
+    }
+  });
+}
+
+// =======================
+// ✏️ EDITAR
+// =======================
+function editar(id) {
+
+  const valor = prompt("Novo valor:");
+
+  if (!valor) return;
+
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      token: TOKEN,
+      telefone: TELEFONE,
+      action: "update",
+      id,
+      data: { valor: parseFloat(valor) }
+    })
+  }).then(carregar);
+}
+
+// =======================
+// 🗑️ DELETAR
+// =======================
+function deletar(id) {
+
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      token: TOKEN,
+      telefone: TELEFONE,
+      action: "delete",
+      id
+    })
+  }).then(carregar);
+}
+
+// =======================
+function limpar() {
+  desc.value = "";
+  valor.value = "";
+}
+
+// =======================
+if (window.location.pathname.includes("dashboard")) {
+  carregar();
+  setInterval(carregar, 5000);
+}
