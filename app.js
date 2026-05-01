@@ -1,5 +1,7 @@
 const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
 
+let telefone = localStorage.getItem("telefone");
+
 // =======================
 // 🔐 LOGIN
 // =======================
@@ -7,63 +9,62 @@ function entrar() {
 
   let input = document.getElementById("telefone").value;
 
-  if (!input) {
-    alert("Digite seu telefone");
+  telefone = normalizarTelefone(input);
+
+  if (!telefone || telefone.length < 10) {
+    alert("Digite um número válido com DDD + 9 + número");
     return;
   }
 
-  const telefone = normalizarTelefone(input);
-
   localStorage.setItem("telefone", telefone);
 
-  // 🔥 PASSA VIA URL (ANTI LOOP)
-  window.location.href = "dashboard.html?telefone=" + telefone;
+  console.log("LOGIN OK:", telefone);
+
+  window.location.href = "dashboard.html";
 }
 
 // =======================
-// 📊 LOAD DASHBOARD
+// 📊 DASHBOARD LOAD
 // =======================
 async function carregar() {
 
-  // 🔥 PEGA DA URL PRIMEIRO
-  const params = new URLSearchParams(window.location.search);
-  let telefone = params.get("telefone");
+  telefone = localStorage.getItem("telefone");
 
-  // 🔥 FALLBACK LOCALSTORAGE
   if (!telefone) {
-    telefone = localStorage.getItem("telefone");
-  }
-
-  console.log("TELEFONE:", telefone);
-
-  // 🔒 VALIDAÇÃO FORTE
-  if (!telefone || telefone === "null" || telefone === "undefined") {
+    console.log("SEM TELEFONE → REDIRECIONANDO");
     window.location.href = "index.html";
     return;
   }
 
-  // 🔥 GARANTE PERSISTÊNCIA
-  localStorage.setItem("telefone", telefone);
-
   try {
 
-    const res = await fetch(API + "?phone=" + telefone);
+    const res = await fetch(API + "?phone=" + telefone); // 🔥 CORREÇÃO AQUI
     const dados = await res.json();
 
     console.log("DADOS:", dados);
 
-    const validos = (dados || []).filter(i => i.ID && i.Valor);
+    // 🔥 VALIDAÇÃO REAL
+    if (!Array.isArray(dados)) {
+      console.log("RESPOSTA INVÁLIDA → LOGOUT");
+      localStorage.removeItem("telefone");
+      window.location.href = "index.html";
+      return;
+    }
+
+    const validos = dados.filter(i => i.ID && i.Valor);
 
     renderHistorico(validos);
     renderGrafico(validos);
 
-  } catch (e) {
-    console.log("ERRO:", e);
+  } catch (err) {
+
+    console.log("ERRO API:", err);
+    alert("Erro ao conectar com servidor");
   }
 }
 
 // =======================
-// 📊 GRÁFICO
+// 📊 GRÁFICO PIZZA
 // =======================
 function renderGrafico(lista) {
 
@@ -96,6 +97,11 @@ function renderHistorico(lista) {
 
   const el = document.getElementById("historico");
 
+  if (!lista || lista.length === 0) {
+    el.innerHTML = "<p>Sem transações ainda</p>";
+    return;
+  }
+
   el.innerHTML = lista.slice(-50).reverse().map(i => `
     <div class="item">
       <div class="info">
@@ -116,20 +122,19 @@ function renderHistorico(lista) {
 // =======================
 function editar(id) {
 
-  const telefone = localStorage.getItem("telefone");
-
   const novo = prompt("Novo valor:");
+
   if (!novo) return;
 
   fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      phone: telefone,
+      phone: telefone, // 🔥 CORREÇÃO
       action: "update",
       id,
       data: { valor: parseFloat(novo) }
     })
-  }).then(() => carregar());
+  }).then(carregar);
 }
 
 // =======================
@@ -137,16 +142,14 @@ function editar(id) {
 // =======================
 function deletar(id) {
 
-  const telefone = localStorage.getItem("telefone");
-
   fetch(API, {
     method: "POST",
     body: JSON.stringify({
-      phone: telefone,
+      phone: telefone, // 🔥 CORREÇÃO
       action: "delete",
       id
     })
-  }).then(() => carregar());
+  }).then(carregar);
 }
 
 // =======================
@@ -159,7 +162,7 @@ function normalizarTelefone(num) {
   if (num.startsWith("55")) num = num.substring(2);
 
   if (num.length === 10) {
-    num = num.slice(0,2) + "9" + num.slice(2);
+    num = num.substring(0,2) + "9" + num.substring(2);
   }
 
   return num;
@@ -169,10 +172,6 @@ function normalizarTelefone(num) {
 // 🚀 AUTO LOAD
 // =======================
 if (window.location.pathname.includes("dashboard")) {
-
-  document.addEventListener("DOMContentLoaded", () => {
-    carregar();
-    setInterval(carregar, 5000);
-  });
-
+  carregar();
+  setInterval(carregar, 5000);
 }
