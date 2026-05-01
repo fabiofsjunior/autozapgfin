@@ -1,149 +1,61 @@
 const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
+const TOKEN = "TOKEN_INTERNO_123";
 
+let TELEFONE = localStorage.getItem("tel") || "";
 
-let telefone = localStorage.getItem("tel");
-
-// =======================
-// 🔐 LOGIN
-// =======================
-if (!telefone) {
-  telefone = prompt("Digite seu telefone (ex: 81999999999)");
-  localStorage.setItem("tel", telefone);
+function normalizarTelefone(numero) {
+  numero = numero.replace(/\D/g, "");
+  if (numero.startsWith("55")) numero = numero.substring(2);
+  return numero;
 }
 
-// 🔐 GERAR TOKEN
-function gerarToken(tel) {
-  return btoa(tel + "AUTOZAP_CHAVE_SECRETA_2026");
-}
+function login() {
+  let tel = prompt("Digite seu telefone (DDD + número):\nEx: 81999999999");
 
-const TOKEN = gerarToken(telefone);
+  tel = normalizarTelefone(tel);
 
-// =======================
-// 💾 ENVIAR
-// =======================
-async function enviar() {
+  if (!tel || tel.length < 10) {
+    alert("Telefone inválido");
+    return;
+  }
 
-  const data = {
-    descricao: desc.value,
-    tipoPagamento: pagamento.value,
-    categoria: categoria.value,
-    valor: parseFloat(valor.value)
-  };
+  localStorage.setItem("tel", tel);
+  TELEFONE = tel;
 
-  await fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      telefone,
-      token: TOKEN,
-      action: "create",
-      data
-    })
-  });
-
-  limpar();
   carregar();
 }
 
-// =======================
-// 📊 CARREGAR
-// =======================
 async function carregar() {
 
-  const res = await fetch(`${API}?telefone=${telefone}&token=${TOKEN}`);
+  if (!TELEFONE) return login();
+
+  const res = await fetch(`${API}?token=${TOKEN}&telefone=${TELEFONE}`);
   const dados = await res.json();
 
-  renderHistorico(dados);
-  renderGrafico(dados);
+  const validos = dados.filter(i => i.ID && i.Descrição);
+
+  renderHistorico(validos);
 }
 
-// =======================
-// ✏️ EDITAR
-// =======================
-function editar(id) {
-
-  const novo = prompt("Novo valor:");
-  if (!novo) return;
-
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      telefone,
-      token: TOKEN,
-      action: "update",
-      id,
-      data: { valor: parseFloat(novo) }
-    })
-  }).then(carregar);
-}
-
-// =======================
-// 🗑️ DELETAR
-// =======================
-function deletar(id) {
-
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      telefone,
-      token: TOKEN,
-      action: "delete",
-      id
-    })
-  }).then(carregar);
-}
-
-// =======================
-// 📄 HISTÓRICO
-// =======================
 function renderHistorico(lista) {
 
   const el = document.getElementById("historico");
 
-  el.innerHTML = lista.slice(-50).reverse().map(i => `
-    <div class="item">
-      <strong>${i.Descrição}</strong>
-      R$ ${i.Valor}
-      <div class="acoes">
-        <button onclick="editar(${i.ID})">✏️</button>
-        <button onclick="deletar(${i.ID})">🗑️</button>
+  el.innerHTML = lista
+    .slice(-50)
+    .reverse()
+    .map(i => `
+      <div class="item">
+        <strong>${i.Descrição}</strong>
+        R$ ${i.Valor}
+        <div class="acoes">
+          <button onclick="editar(${i.ID})">✏️</button>
+          <button onclick="deletar(${i.ID})">🗑️</button>
+        </div>
       </div>
-    </div>
-  `).join("");
+    `)
+    .join("");
 }
 
-// =======================
-// 📊 GRÁFICO (PIZZA)
-// =======================
-function renderGrafico(lista) {
-
-  let resumo = {};
-
-  lista.forEach(i => {
-    const cat = i.Categoria || "Outros";
-    resumo[cat] = (resumo[cat] || 0) + Number(i.Valor);
-  });
-
-  const ctx = document.getElementById("grafico");
-
-  if (window.chart) window.chart.destroy();
-
-  window.chart = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: Object.keys(resumo),
-      datasets: [{
-        data: Object.values(resumo)
-      }]
-    }
-  });
-}
-
-// =======================
-function limpar(){
-  desc.value = "";
-  valor.value = "";
-}
-
-// =======================
 carregar();
 setInterval(carregar, 5000);
