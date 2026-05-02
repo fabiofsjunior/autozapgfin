@@ -18,6 +18,7 @@ async function carregar() {
 
   renderHistorico(validos);
   renderGrafico(validos);
+  renderGraficoMensal(validos); // 👈 NOVO
   renderIA(validos);
 }
 
@@ -175,6 +176,49 @@ function renderIA(lista) {
     <b>${maiorItem?.["Descrição"] || "-"}</b><br>
     R$ ${maiorValor.toFixed(2)}
   `;
+}
+
+//RENDER GRAFICO MENSAL (LISTA)
+function renderGraficoMensal(lista) {
+
+  const meses = {};
+
+  lista.forEach(i => {
+
+    let valor = String(i.Valor)
+      .replace("R$", "")
+      .replace(",", ".")
+      .replace(/[^\d.]/g, "");
+
+    valor = Number(valor) || 0;
+
+    // Data formato: dd/MM/yyyy
+    const data = i.Data || "";
+    const mes = data.substring(3, 10); // MM/yyyy
+
+    if (!mes) return;
+
+    meses[mes] = (meses[mes] || 0) + valor;
+  });
+
+  const labels = Object.keys(meses).sort();
+  const valores = labels.map(m => meses[m]);
+
+  const ctx = document.getElementById("graficoMensal");
+
+  if (window.chartMensal) window.chartMensal.destroy();
+
+  window.chartMensal = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Gasto mensal",
+        data: valores,
+        tension: 0.3
+      }]
+    }
+  });
 }
 
 // =======================
