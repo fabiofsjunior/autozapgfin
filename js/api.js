@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbw7p1V-elYlP31gkOAInnpmuYWFxGC08RWcrA0e5h8PHVPvC3C3AB4lfRrjwxBpCO8o/exec";
+const API = "https://script.google.com/macros/s/AKfycbwJPbJ_dfcX7u6OZQine64Vfpg47shcOLsgHTYz5dd0oHa-JtMVhft2aStjyHKOvcfQ/exec";
 
 async function apiGet(phone) {
 
