@@ -122,3 +122,38 @@ canvas {
   border-radius: 10px;
   font-size: 13px;
 }
+
+/* HISTORICO DE GASTOS*/
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.acoes button {
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background: #ffc107;
+}
+
+.btn-delete {
+  background: #f44336;
+  color: white;
+}
