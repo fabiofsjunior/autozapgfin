@@ -1,9 +1,15 @@
+// =======================
+// 🔐 TELEFONE (LOGIN)
+// =======================
 let telefone = localStorage.getItem("telefone");
 
 if (!telefone) {
   window.location.href = "index.html";
 }
 
+// =======================
+// 📊 CARREGAR DADOS
+// =======================
 async function carregar() {
 
   const dados = await getDados(telefone);
@@ -15,6 +21,9 @@ async function carregar() {
   renderIA(validos);
 }
 
+// =======================
+// 📊 GRÁFICO PIZZA
+// =======================
 function renderGrafico(lista) {
 
   const resumo = {};
@@ -39,6 +48,9 @@ function renderGrafico(lista) {
   });
 }
 
+// =======================
+// 📄 HISTÓRICO (COM CRUD)
+// =======================
 function renderHistorico(lista) {
 
   const el = document.getElementById("historico");
@@ -69,6 +81,54 @@ function renderHistorico(lista) {
     .join("");
 }
 
+// =======================
+// ✏️ EDITAR
+// =======================
+async function editar(id) {
+
+  const novoValor = prompt("Novo valor:");
+
+  if (!novoValor) return;
+
+  const valor = Number(novoValor.replace(",", "."));
+
+  if (isNaN(valor)) {
+    alert("Valor inválido");
+    return;
+  }
+
+  await apiPost({
+    phone: telefone,
+    action: "update",
+    id: id,
+    data: {
+      valor: valor
+    }
+  });
+
+  carregar();
+}
+
+// =======================
+// 🗑 DELETAR
+// =======================
+async function deletar(id) {
+
+  const confirmar = confirm("Deseja excluir este lançamento?");
+  if (!confirmar) return;
+
+  await apiPost({
+    phone: telefone,
+    action: "delete",
+    id: id
+  });
+
+  carregar();
+}
+
+// =======================
+// 🧠 IA (ANÁLISE)
+// =======================
 function renderIA(lista) {
 
   if (!lista.length) {
@@ -109,5 +169,8 @@ function renderIA(lista) {
   `;
 }
 
+// =======================
+// 🔄 AUTO UPDATE
+// =======================
 carregar();
 setInterval(carregar, 10000);
