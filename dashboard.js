@@ -71,11 +71,43 @@ function renderHistorico(lista) {
 
 function renderIA(lista) {
 
-  let total = lista.reduce((acc, i) => acc + Number(i.Valor), 0);
+  if (!lista.length) {
+    document.getElementById("ia").innerText = "Sem dados ainda.";
+    return;
+  }
 
-  document.getElementById("ia").innerText =
-    "Total gasto: R$ " + total.toFixed(2);
+  let total = 0;
+  let categorias = {};
+  let maior = { valor: 0 };
+
+  lista.forEach(i => {
+
+    const valor = Number(i.Valor) || 0;
+    const cat = i.Categoria || "Outros";
+
+    total += valor;
+
+    categorias[cat] = (categorias[cat] || 0) + valor;
+
+    if (valor > maior.valor) {
+      maior = i;
+    }
+  });
+
+  const topCategoria = Object.entries(categorias)
+    .sort((a,b) => b[1] - a[1])[0];
+
+  document.getElementById("ia").innerHTML = `
+    💰 Total gasto: <b>R$ ${total.toFixed(2)}</b><br><br>
+
+    📊 Categoria principal: <b>${topCategoria[0]}</b><br>
+    💸 Valor: R$ ${topCategoria[1].toFixed(2)}<br><br>
+
+    🔥 Maior gasto:<br>
+    <b>${maior["Descrição"] || "-"}</b><br>
+    R$ ${Number(maior.Valor).toFixed(2)}
+  `;
 }
 
 carregar();
-setInterval(carregar, 5000);
+setInterval(carregar, 10000);
