@@ -1,63 +1,22 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AUTOZAP GFIN</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - AUTOZAP</title>
+
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container center">
+    <h2>🔐 Entrar</h2>
 
-  <h2>🔐 AUTOZAP GFIN</h2>
-
-  <div class="card">
-    <p>Digite seu WhatsApp:</p>
-
-    <input id="telefone" placeholder="DDD + 9 + número">
-    <button onclick="login()">Entrar</button>
-
-    
+    <input id="telefone" placeholder="Ex: 81999999999" />
+    <button onclick="entrar()">Entrar</button>
   </div>
 
-</div>
-
-<script>
-function normalizarTelefone(tel){
-
-  tel = tel.replace(/\D/g, "");
-
-  // remove 55
-  if (tel.startsWith("55")) {
-    tel = tel.substring(2);
-  }
-
-  // adiciona 9 se faltar
-  if (tel.length === 10) {
-    tel = tel.slice(0,2) + "9" + tel.slice(2);
-  }
-
-  return tel;
-}
-
-function login(){
-
-  let tel = document.getElementById("telefone").value;
-
-  tel = normalizarTelefone(tel);
-
-  if (tel.length !== 11) {
-    alert("Telefone inválido");
-    return;
-  }
-
-  localStorage.setItem("user_phone", tel);
-
-  window.location.href = "dashboard.html";
-}
-</script>
-
+  <script src="js/auth.js"></script>
 </body>
 </html>
