@@ -1,5 +1,9 @@
+const API = "https://script.google.com/macros/s/AKfycbwJPbJ_dfcX7u6OZQine64Vfpg47shcOLsgHTYz5dd0oHa-JtMVhft2aStjyHKOvcfQ/exec";
+
 let telefone = localStorage.getItem("telefone");
 
+// =======================
+// LOAD
 // =======================
 async function carregar() {
 
@@ -8,90 +12,35 @@ async function carregar() {
     return;
   }
 
-  const dados = await apiGet(telefone);
+  const res = await fetch(API + "?phone=" + telefone);
+  const dados = await res.json();
 
   const validos = dados.filter(i => i.ID && i.Valor);
 
-  renderGrafico(validos);
   renderHistorico(validos);
+  renderGrafico(validos);
+  renderIA(validos);
 }
 
 // =======================
-function criar() {
-
-  const data = {
-    descricao: desc.value,
-    forma_pagamento: pagamento.value,
-    categoria: categoria.value,
-    valor: parseFloat(valor.value),
-    tipo: "Despesa"
-  };
-
-  apiPost({
-    phone: telefone,
-    action: "create",
-    data
-  }).then(() => {
-    limpar();
-    carregar();
-  });
-}
-
-// =======================
-function editar(id) {
-
-  const novo = prompt("Novo valor:");
-
-  if (!novo) return;
-
-  apiPost({
-    phone: telefone,
-    action: "update",
-    id,
-    data: { valor: parseFloat(novo) }
-  }).then(carregar);
-}
-
-// =======================
-function deletar(id) {
-
-  apiPost({
-    phone: telefone,
-    action: "delete",
-    id
-  }).then(carregar);
-}
-
-// =======================
-function renderHistorico(lista) {
-
-  historico.innerHTML = lista.slice(-50).reverse().map(i => `
-    <div class="item">
-      <div>
-        <strong>${i.Descrição}</strong>
-        <span>R$ ${i.Valor}</span>
-      </div>
-
-      <div class="acoes">
-        <button onclick="editar(${i.ID})">✏️</button>
-        <button onclick="deletar(${i.ID})">🗑️</button>
-      </div>
-    </div>
-  `).join("");
-}
-
+// GRÁFICO (FIX)
 // =======================
 function renderGrafico(lista) {
 
-  let resumo = {};
+  const resumo = {};
 
   lista.forEach(i => {
-    resumo[i.Categoria] = (resumo[i.Categoria] || 0) + parseFloat(i.Valor);
+    const cat = i.Categoria || "Outros";
+    resumo[cat] = (resumo[cat] || 0) + Number(i.Valor);
   });
 
-  if (window.chart) window.chart.destroy();
+  const ctx = document.getElementById("grafico");
 
-  window.chart = new Chart(grafico, {
+  if (window.chart) {
+    window.chart.destroy();
+  }
+
+  window.chart = new Chart(ctx, {
     type: "doughnut",
     data: {
       labels: Object.keys(resumo),
@@ -103,9 +52,56 @@ function renderGrafico(lista) {
 }
 
 // =======================
-function limpar() {
-  desc.value = "";
-  valor.value = "";
+// IA ANALYSIS
+// =======================
+function renderIA(lista) {
+
+  let total = 0;
+  let categorias = {};
+
+  lista.forEach(i => {
+    const valor = Number(i.Valor);
+    total += valor;
+
+    const cat = i.Categoria || "Outros";
+    categorias[cat] = (categorias[cat] || 0) + valor;
+  });
+
+  // maior gasto
+  let maiorCategoria = Object.entries(categorias)
+    .sort((a,b) => b[1] - a[1])[0];
+
+  let texto = `
+Total gasto: R$ ${total.toFixed(2)}  
+Maior categoria: ${maiorCategoria ? maiorCategoria[0] : "-"}  
+Você está gastando mais com isso do que o restante.
+`;
+
+  document.getElementById("ia").innerText = texto;
+}
+
+// =======================
+// HISTÓRICO
+// =======================
+function renderHistorico(lista) {
+
+  const el = document.getElementById("historico");
+
+  el.innerHTML = lista.slice(-50).reverse().map(i => `
+    <div class="item">
+      
+      <div class="info">
+        <strong>${i.Descrição}</strong>
+        <span>R$ ${i.Valor}</span>
+      </div>
+
+      <div class="acoes">
+        <button onclick="editar(${i.ID})">✏️</button>
+        <button onclick="deletar(${i.ID})">🗑️</button>
+      </div>
+
+    </div>
+  `).join("");
 }
 
 // =======================

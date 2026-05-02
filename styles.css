@@ -1,61 +1,124 @@
-body {
-  font-family: Arial;
-  background: #f4f6f8;
-  margin: 0;
+* {
+  box-sizing: border-box;
 }
 
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f4f6f8;
+}
+
+/* CONTAINER */
 .container {
-  max-width: 600px;
+  max-width: 500px;
   margin: auto;
   padding: 15px;
 }
 
-.center {
+/* LOGIN */
+.login-box {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 80px;
 }
 
+.login-box input {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+}
+
+.login-box button {
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* CARDS */
 .card {
   background: white;
   padding: 15px;
-  border-radius: 12px;
   margin-bottom: 15px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-input, select, button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-}
-
-button {
-  background: #4caf50;
-  color: white;
-  border: none;
-}
-
+/* HISTÓRICO */
 .item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
   border-bottom: 1px solid #eee;
-  padding: 10px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.info strong {
+  font-size: 14px;
+}
+
+.info span {
+  font-size: 13px;
+  color: #666;
+}
+
+/* AÇÕES */
+.acoes {
+  display: flex;
+  gap: 8px;
 }
 
 .acoes button {
-  width: auto;
-  margin-right: 5px;
+  border: none;
+  background: #eee;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
-.scroll {
-  max-height: 300px;
-  overflow-y: auto;
+.acoes button:hover {
+  background: #ddd;
 }
 
+/* GRÁFICO */
+canvas {
+  max-width: 100%;
+}
+
+/* NAVBAR */
 .navbar {
   position: fixed;
   bottom: 0;
   width: 100%;
   background: white;
+  display: flex;
+  justify-content: space-around;
   padding: 10px;
-  text-align: center;
+  border-top: 1px solid #ddd;
+}
+
+.navbar button {
+  border: none;
+  background: none;
+  font-size: 20px;
+}
+
+/* IA BOX */
+.ia-box {
+  background: #1e1e1e;
+  color: #00ff9f;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
 }
