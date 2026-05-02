@@ -43,14 +43,30 @@ function renderHistorico(lista) {
 
   const el = document.getElementById("historico");
 
-  el.innerHTML = lista.slice(-50).reverse().map(i => `
-    <div class="item">
-      <div class="info">
-        <strong>${i.Descrição}</strong>
-        <span>R$ ${i.Valor}</span>
+  el.innerHTML = lista
+    .slice(-50)
+    .reverse()
+    .map(i => {
+
+      if (!i.ID || !i.Valor) return "";
+
+      return `
+      <div class="item">
+        
+        <div class="info">
+          <strong>${i["Descrição"] || "-"}</strong>
+          <span>R$ ${Number(i.Valor).toFixed(2)}</span>
+        </div>
+
+        <div class="acoes">
+          <button onclick="editar(${i.ID})" class="btn-edit">✏️</button>
+          <button onclick="deletar(${i.ID})" class="btn-delete">🗑️</button>
+        </div>
+
       </div>
-    </div>
-  `).join("");
+      `;
+    })
+    .join("");
 }
 
 function renderIA(lista) {
