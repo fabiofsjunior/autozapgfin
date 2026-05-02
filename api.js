@@ -13,3 +13,8 @@ async function apiPost(data) {
     body: JSON.stringify(data)
   });
 }
+
+async function getDados(telefone) {
+  const res = await fetch(API + "?phone=" + telefone);
+  return await res.json();
+}
