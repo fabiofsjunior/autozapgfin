@@ -1,53 +1,15 @@
-let telefone = null;
+function entrar() {
 
-// =======================
-window.onload = async () => {
+  let input = document.getElementById("telefone").value;
 
-  telefone = localStorage.getItem("autozap_user");
+  let telefone = normalizarTelefone(input);
 
-  if (!telefone) {
-    window.location.href = "index.html";
+  if (!telefone || telefone.length < 11) {
+    alert("Digite um número válido com DDD + 9");
     return;
   }
 
-  await carregar();
-  setInterval(carregar, 5000);
-};
+  localStorage.setItem("telefone", telefone);
 
-// =======================
-async function carregar() {
-
-  const dados = await apiGet(telefone);
-
-  const validos = dados.filter(i => i.ID && i.Valor);
-
-  renderHistorico(validos);
-  renderGrafico(validos);
-}
-
-// =======================
-async function criar() {
-
-  const data = {
-    descricao: desc.value,
-    valor: parseFloat(valor.value),
-    categoria: categoria.value,
-    tipo: "Despesa",
-    forma_pagamento: "pix"
-  };
-
-  await apiPost({
-    phone: telefone,
-    action: "create",
-    data
-  });
-
-  limpar();
-  carregar();
-}
-
-// =======================
-function limpar() {
-  desc.value = "";
-  valor.value = "";
+  window.location.href = "dashboard.html";
 }
