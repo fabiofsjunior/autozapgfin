@@ -138,34 +138,42 @@ function renderIA(lista) {
 
   let total = 0;
   let categorias = {};
-  let maior = { valor: 0 };
+  let maiorValor = 0;
+  let maiorItem = null;
 
   lista.forEach(i => {
 
-    const valor = Number(i.Valor) || 0;
+    let valor = String(i.Valor)
+      .replace("R$", "")
+      .replace(",", ".")
+      .replace(/[^\d.]/g, "");
+
+    valor = Number(valor) || 0;
+
     const cat = i.Categoria || "Outros";
 
     total += valor;
 
     categorias[cat] = (categorias[cat] || 0) + valor;
 
-    if (valor > maior.valor) {
-      maior = i;
+    if (valor > maiorValor) {
+      maiorValor = valor;
+      maiorItem = i;
     }
   });
 
   const topCategoria = Object.entries(categorias)
-    .sort((a,b) => b[1] - a[1])[0];
+    .sort((a, b) => b[1] - a[1])[0];
 
   document.getElementById("ia").innerHTML = `
     💰 Total gasto: <b>R$ ${total.toFixed(2)}</b><br><br>
 
     📊 Categoria principal: <b>${topCategoria[0]}</b><br>
-    💸 Valor: R$ ${topCategoria[1].toFixed(2)}<br><br>
+    💸 Total: R$ ${topCategoria[1].toFixed(2)}<br><br>
 
-    🔥 Maior gasto:<br>
-    <b>${maior["Descrição"] || "-"}</b><br>
-    R$ ${Number(maior.Valor).toFixed(2)}
+    🔥 Maior gasto real:<br>
+    <b>${maiorItem?.["Descrição"] || "-"}</b><br>
+    R$ ${maiorValor.toFixed(2)}
   `;
 }
 
