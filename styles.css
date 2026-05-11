@@ -165,7 +165,7 @@ canvas {
 .filtros-periodo {
   display: flex;
 
-  justify-content: center;
+  justify-content: space-evenly;
 
   gap: 8px;
 
