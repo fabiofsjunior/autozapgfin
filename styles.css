@@ -34,7 +34,7 @@ body {
   padding: 14px;
   border-radius: 10px;
   border: none;
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
   font-weight: bold;
   font-size: 16px;
@@ -46,7 +46,7 @@ body {
   padding: 15px;
   margin-bottom: 15px;
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* HISTÓRICO */
@@ -163,8 +163,9 @@ canvas {
 ========================= */
 
 .filtros-periodo {
-
   display: flex;
+
+  justify-content: center;
 
   gap: 8px;
 
@@ -175,7 +176,6 @@ canvas {
   margin-bottom: 15px;
 
   scrollbar-width: none;
-
 }
 
 .filtros-periodo::-webkit-scrollbar {
@@ -183,7 +183,6 @@ canvas {
 }
 
 .filtro-btn {
-
   border: none;
 
   background: white;
@@ -204,24 +203,17 @@ canvas {
 
   transition: all 0.2s ease;
 
-  box-shadow:
-    0 2px 8px rgba(0,0,0,0.05);
-
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .filtro-btn:hover {
-
   transform: translateY(-1px);
-
 }
 
 .filtro-btn.ativo {
-
-  background: #4CAF50;
+  background: #4caf50;
 
   color: white;
 
-  box-shadow:
-    0 4px 12px rgba(76,175,80,0.25);
-
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.25);
 }
