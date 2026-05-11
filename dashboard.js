@@ -87,9 +87,6 @@ function alterarFiltro(periodo, btn) {
 }
 
 // =======================
-// 📅 FILTRO POR PERÍODO (CORRIGIDO DEFINITIVO)
-// =======================
-// =======================
 // 📅 NORMALIZAR DATA (SEM TIMEZONE BUG)
 // =======================
 function normalizarData(dataStr) {
@@ -181,9 +178,9 @@ async function carregar() {
     console.log("🔥 DADOS BRUTOS:", dados);
 
     const validos = dados.filter(
-      (i) => i.ID && i.Valor !== undefined && i.Valor !== null
+      (i) => i.ID && i.Valor !== undefined && i.Valor !== null,
     );
-
+    const baseCompleta = removerDuplicados(validos);
     const unicos = removerDuplicados(validos);
 
     const filtrados = filtrarPeriodo(unicos);
@@ -192,7 +189,7 @@ async function carregar() {
 
     renderHistorico(filtrados);
     renderGrafico(filtrados);
-    renderGraficoMensal(filtrados);
+    renderGraficoMensal(baseCompleta);
     renderIA(filtrados);
   } catch (erro) {
     console.error("Erro ao carregar:", erro);
@@ -337,11 +334,9 @@ function renderIA(lista) {
     }
   });
 
-  const topCategoria =
-    Object.entries(categorias).sort((a, b) => b[1] - a[1])[0] || [
-      "Outros",
-      0,
-    ];
+  const topCategoria = Object.entries(categorias).sort(
+    (a, b) => b[1] - a[1],
+  )[0] || ["Outros", 0];
 
   el.innerHTML = `
     💰 Total: <b>R$ ${total.toFixed(2)}</b>
@@ -372,19 +367,24 @@ function renderGraficoMensal(lista) {
 
     const d = new Date(dataStr + "T00:00:00");
 
-    const mes = `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    const key = `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 
-    meses[mes] = (meses[mes] || 0) + parseValor(i.Valor);
+    meses[key] = (meses[key] || 0) + parseValor(i.Valor);
   });
 
   const labels = Object.keys(meses).sort((a, b) => {
     const [ma, ya] = a.split("/");
     const [mb, yb] = b.split("/");
-
     return new Date(ya, ma - 1) - new Date(yb, mb - 1);
   });
 
   const valores = labels.map((m) => meses[m]);
+
+  // 🔥 garante pelo menos 2 pontos visuais
+  if (labels.length === 1) {
+    labels.unshift("Anterior");
+    valores.unshift(0);
+  }
 
   const ctx = document.getElementById("graficoMensal");
 
@@ -396,7 +396,7 @@ function renderGraficoMensal(lista) {
       labels,
       datasets: [
         {
-          label: "Gastos",
+          label: "Tendência de gastos",
           data: valores,
           tension: 0.3,
           fill: true,
@@ -405,6 +405,9 @@ function renderGraficoMensal(lista) {
     },
     options: {
       responsive: true,
+      plugins: {
+        legend: { display: true },
+      },
     },
   });
 }
