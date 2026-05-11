@@ -54,49 +54,39 @@ function alterarFiltro(periodo, btn) {
 }
 
 function filtrarPeriodo(lista) {
+
   const filtro = filtroAtual;
   const hoje = new Date();
-
-  // 🔥 REMOVE HORÁRIO
   hoje.setHours(0, 0, 0, 0);
 
   return lista.filter((i) => {
-    if (!i.Data) return false;
 
-    // Data formato dd/MM/yyyy
-    const partes = i.Data.split("/");
+    const raw = i.Data;
 
-    if (partes.length < 3) return false;
+    if (!raw) return false;
 
-    const dataItem = new Date(
-      Number(partes[2]), // ano
-      Number(partes[1]) - 1, // mês
-      Number(partes[0]), // dia
-    );
+    const dataItem = new Date(raw);
 
-    // 🔥 REMOVE HORÁRIO
+    if (isNaN(dataItem)) return false;
+
     dataItem.setHours(0, 0, 0, 0);
 
     // =======================
     // DIA
     // =======================
     if (filtro === "DIA") {
-      return (
-        dataItem.getDate() === hoje.getDate() &&
-        dataItem.getMonth() === hoje.getMonth() &&
-        dataItem.getFullYear() === hoje.getFullYear()
-      );
+      return dataItem.getTime() === hoje.getTime();
     }
 
     // =======================
-    // SEMANA (últimos 7 dias)
+    // SEMANA
     // =======================
     if (filtro === "SEMANA") {
-      const inicioSemana = new Date(hoje);
 
-      inicioSemana.setDate(hoje.getDate() - 7);
+      const inicio = new Date(hoje);
+      inicio.setDate(hoje.getDate() - 7);
 
-      return dataItem >= inicioSemana;
+      return dataItem >= inicio;
     }
 
     // =======================
@@ -205,24 +195,23 @@ function renderGrafico(lista) {
 // 📄 HISTÓRICO (COM CRUD)
 // =======================
 function renderHistorico(lista) {
+
   const el = document.getElementById("historico");
 
-  // 🔥 ORDENA POR DATA
   const ordenado = [...lista].sort((a, b) => {
-    const pa = a.Data.split("/");
-    const pb = b.Data.split("/");
 
-    const da = new Date(pa[2], pa[1] - 1, pa[0]);
-
-    const db = new Date(pb[2], pb[1] - 1, pb[0]);
+    const da = new Date(a.Data);
+    const db = new Date(b.Data);
 
     return db - da;
+
   });
 
   el.innerHTML = ordenado
     .slice(0, 50)
     .map((i) => {
-      if (!i.ID || !i.Valor) return "";
+
+      if (!i.ID || i.Valor === undefined) return "";
 
       return `
       <div class="item">
@@ -241,17 +230,11 @@ function renderHistorico(lista) {
 
         <div class="acoes">
 
-          <button
-            onclick="editar(${i.ID})"
-            class="btn-edit"
-          >
+          <button onclick="editar(${i.ID})" class="btn-edit">
             ✏️
           </button>
 
-          <button
-            onclick="deletar(${i.ID})"
-            class="btn-delete"
-          >
+          <button onclick="deletar(${i.ID})" class="btn-delete">
             🗑️
           </button>
 
@@ -259,6 +242,7 @@ function renderHistorico(lista) {
 
       </div>
       `;
+
     })
     .join("");
 }
