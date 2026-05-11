@@ -20,16 +20,35 @@ let carregando = false;
 // =======================
 // 💰 PARSE VALOR
 // =======================
+
 function parseValor(valor) {
-  return (
-    Number(
-      String(valor)
-        .replace("R$", "")
-        .replace(/\./g, "")
-        .replace(",", ".")
-        .replace(/[^\d.-]/g, "")
-    ) || 0
-  );
+  if (valor === null || valor === undefined) return 0;
+
+  let v = String(valor).trim();
+
+  // remove moeda
+  v = v.replace("R$", "").replace(/\s/g, "");
+
+  // CASO 1: formato BR (1.234,56)
+  if (v.includes(",") && v.includes(".")) {
+    v = v.replace(/\./g, "").replace(",", ".");
+  }
+
+  // CASO 2: formato EU/US (15.30)
+  else if (v.includes(".") && !v.includes(",")) {
+    // mantém ponto como decimal (NÃO remove!)
+    v = v;
+  }
+
+  // CASO 3: só vírgula decimal (15,30)
+  else if (v.includes(",") && !v.includes(".")) {
+    v = v.replace(",", ".");
+  }
+
+  // remove qualquer lixo restante
+  v = v.replace(/[^\d.-]/g, "");
+
+  return Number(v) || 0;
 }
 
 // =======================
