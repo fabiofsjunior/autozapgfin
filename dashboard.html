@@ -1,51 +1,52 @@
 <!doctype html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard</title>
 
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
 
-<body>
+  <body>
+    <div class="container">
+      <h2>📊 Dashboard</h2>
 
-<div class="container">
+      <div class="card">
+        <canvas id="grafico"></canvas>
+      </div>
 
-  <h2>📊 Dashboard</h2>
+      <div class="filtro-container">
+        <select id="filtroPeriodo" onchange="carregar()">
+          <option value="SEMANA">📅 Semana</option>
 
-  <div class="card">
-    <canvas id="grafico"></canvas>
-  </div>
+          <option value="MES" selected>📆 Mês</option>
 
-  <select id="filtroPeriodo" onchange="atualizarDashboard()">
-  <option value="SEMANA">Semana</option>
-  <option value="MES" selected>Mês</option>
-  <option value="ANO">Ano</option>
-  <option value="TUDO">Tudo</option>
-  </select>
+          <option value="ANO">🗓 Ano</option>
 
-  <div class="card">
-    <h3>📈 Linha de Tendência</h3>
-    <canvas id="graficoMensal"></canvas>
-  </div>
+          <option value="TUDO">📊 Tudo</option>
+        </select>
+      </div>
 
-  <div class="card">
-    <h3>🧠 Análise de Gastos</h3>
-    <div id="ia"></div>
-  </div>
+      <div class="card">
+        <h3>📈 Linha de Tendência</h3>
+        <canvas id="graficoMensal"></canvas>
+      </div>
 
-  <div class="card">
-    <h3>📄 Histórico de Transações</h3>
-    <div id="historico"></div>
-  </div>
+      <div class="card">
+        <h3>🧠 Análise de Gastos</h3>
+        <div id="ia"></div>
+      </div>
 
-</div>
+      <div class="card">
+        <h3>📄 Histórico de Transações</h3>
+        <div id="historico"></div>
+      </div>
+    </div>
 
-<script src="utils.js" defer></script>
-<script src="api.js" defer></script>
-<script src="dashboard.js" defer></script>
-
-</body>
+    <script src="utils.js" defer></script>
+    <script src="api.js" defer></script>
+    <script src="dashboard.js" defer></script>
+  </body>
 </html>

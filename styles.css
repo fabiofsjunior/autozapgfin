@@ -157,3 +157,90 @@ canvas {
   background: #f44336;
   color: white;
 }
+
+/* =========================
+   📅 FILTRO PERÍODO
+========================= */
+
+.filtro-container {
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  margin-bottom: 15px;
+
+}
+
+#filtroPeriodo {
+
+  width: 160px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #ddd;
+
+  border-radius: 12px;
+
+  background: white;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #333;
+
+  cursor: pointer;
+
+  outline: none;
+
+  transition: all 0.2s ease;
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.04);
+
+}
+
+/* HOVER */
+#filtroPeriodo:hover {
+
+  border-color: #4CAF50;
+
+  box-shadow:
+    0 4px 12px rgba(76,175,80,0.15);
+
+}
+
+/* FOCUS */
+#filtroPeriodo:focus {
+
+  border-color: #4CAF50;
+
+  box-shadow:
+    0 0 0 3px rgba(76,175,80,0.15);
+
+}
+
+/* OPTION */
+#filtroPeriodo option {
+
+  font-weight: 500;
+
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+
+  .filtro-container {
+
+    justify-content: center;
+
+  }
+
+  #filtroPeriodo {
+
+    width: 100%;
+
+  }
+
+}
