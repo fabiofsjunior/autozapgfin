@@ -391,13 +391,13 @@ function renderGraficoMensal(lista) {
 }
 
 // =======================
-// 🔥 REMOVE DUPLICADOS
+// 🔥 REMOVE DUPLICADOS REAL
 // =======================
 function removerDuplicados(lista) {
   const map = new Map();
 
   lista.forEach((item) => {
-    const chave = `${item.ID}-${item.Valor}-${item.Data}`;
+    const chave = `${item.ID}|${item.Data}|${item.Valor}|${item["Descrição"]}`;
     map.set(chave, item);
   });
 
