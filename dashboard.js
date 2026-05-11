@@ -8,18 +8,142 @@ if (!telefone) {
 }
 
 // =======================
+// 🚫 CONTROLE DE REQUISIÇÃO
+// =======================
+let carregando = false;
+
+// =======================
+// 💰 PARSE VALOR MONETÁRIO
+// =======================
+function parseValor(valor) {
+
+  return Number(
+    String(valor)
+      .replace("R$", "")
+      .replace(/\./g, "")
+      .replace(",", ".")
+      .replace(/[^\d.-]/g, "")
+  ) || 0;
+
+}
+
+// =======================
+// 📅 FILTRO POR PERÍODO
+// =======================
+function filtrarPeriodo(lista) {
+
+  const filtro =
+    document.getElementById("filtroPeriodo")?.value || "MES";
+
+  const hoje = new Date();
+
+  // 🔥 REMOVE HORÁRIO
+  hoje.setHours(0, 0, 0, 0);
+
+  return lista.filter((i) => {
+
+    if (!i.Data) return false;
+
+    // Data formato dd/MM/yyyy
+    const partes = i.Data.split("/");
+
+    if (partes.length < 3) return false;
+
+    const dataItem = new Date(
+      Number(partes[2]), // ano
+      Number(partes[1]) - 1, // mês
+      Number(partes[0]) // dia
+    );
+
+    // 🔥 REMOVE HORÁRIO
+    dataItem.setHours(0, 0, 0, 0);
+
+    // =======================
+    // SEMANA (últimos 7 dias)
+    // =======================
+    if (filtro === "SEMANA") {
+
+      const inicioSemana = new Date(hoje);
+
+      inicioSemana.setDate(
+        hoje.getDate() - 7
+      );
+
+      return dataItem >= inicioSemana;
+    }
+
+    // =======================
+    // MÊS
+    // =======================
+    if (filtro === "MES") {
+
+      return (
+        dataItem.getMonth() === hoje.getMonth() &&
+        dataItem.getFullYear() === hoje.getFullYear()
+      );
+    }
+
+    // =======================
+    // ANO
+    // =======================
+    if (filtro === "ANO") {
+
+      return (
+        dataItem.getFullYear() === hoje.getFullYear()
+      );
+    }
+
+    // =======================
+    // TUDO
+    // =======================
+    return true;
+
+  });
+
+}
+
+// =======================
 // 📊 CARREGAR DADOS
 // =======================
 async function carregar() {
 
-  const dados = await getDados(telefone);
+  // 🚫 EVITA CHAMADAS DUPLAS
+  if (carregando) return;
 
-  const validos = dados.filter(i => i.ID && i.Valor);
+  carregando = true;
 
-  renderHistorico(validos);
-  renderGrafico(validos);
-  renderGraficoMensal(validos); // 👈 NOVO
-  renderIA(validos);
+  try {
+
+    const dados =
+      await getDados(telefone);
+
+    const validos =
+      dados.filter(i => i.ID && i.Valor);
+
+    // 🔥 FILTRO GLOBAL
+    const filtrados =
+      filtrarPeriodo(validos);
+
+    renderHistorico(filtrados);
+
+    renderGrafico(filtrados);
+
+    renderGraficoMensal(filtrados);
+
+    renderIA(filtrados);
+
+  }
+  catch (erro) {
+
+    console.error("Erro ao carregar:", erro);
+
+  }
+  finally {
+
+    carregando = false;
+
+  }
+
 }
 
 // =======================
@@ -29,24 +153,55 @@ function renderGrafico(lista) {
 
   const resumo = {};
 
-  lista.forEach(i => {
-    const cat = i.Categoria || "Outros";
-    resumo[cat] = (resumo[cat] || 0) + Number(i.Valor);
+  lista.forEach((i) => {
+
+    const cat =
+      i.Categoria || "Outros";
+
+    resumo[cat] =
+      (resumo[cat] || 0) + parseValor(i.Valor);
+
   });
 
-  const ctx = document.getElementById("grafico");
+  const ctx =
+    document.getElementById("grafico");
 
-  if (window.chart) window.chart.destroy();
+  if (window.chart) {
+    window.chart.destroy();
+  }
 
   window.chart = new Chart(ctx, {
+
     type: "doughnut",
+
     data: {
+
       labels: Object.keys(resumo),
+
       datasets: [{
+
         data: Object.values(resumo)
+
       }]
+
+    },
+
+    options: {
+
+      responsive: true,
+
+      plugins: {
+
+        legend: {
+          position: "bottom"
+        }
+
+      }
+
     }
+
   });
+
 }
 
 // =======================
@@ -54,32 +209,75 @@ function renderGrafico(lista) {
 // =======================
 function renderHistorico(lista) {
 
-  const el = document.getElementById("historico");
+  const el =
+    document.getElementById("historico");
 
-  el.innerHTML = lista
-    .slice(-50)
-    .reverse()
-    .map(i => {
+  // 🔥 ORDENA POR DATA
+  const ordenado = [...lista].sort((a, b) => {
+
+    const pa = a.Data.split("/");
+    const pb = b.Data.split("/");
+
+    const da = new Date(
+      pa[2],
+      pa[1] - 1,
+      pa[0]
+    );
+
+    const db = new Date(
+      pb[2],
+      pb[1] - 1,
+      pb[0]
+    );
+
+    return db - da;
+
+  });
+
+  el.innerHTML = ordenado
+    .slice(0, 50)
+    .map((i) => {
 
       if (!i.ID || !i.Valor) return "";
 
       return `
       <div class="item">
-        
+
         <div class="info">
-          <strong>${i["Descrição"] || "-"}</strong>
-          <span>R$ ${Number(i.Valor).toFixed(2)}</span>
+
+          <strong>
+            ${i["Descrição"] || "-"}
+          </strong>
+
+          <span>
+            R$ ${parseValor(i.Valor).toFixed(2)}
+          </span>
+
         </div>
 
         <div class="acoes">
-          <button onclick="editar(${i.ID})" class="btn-edit">✏️</button>
-          <button onclick="deletar(${i.ID})" class="btn-delete">🗑️</button>
+
+          <button
+            onclick="editar(${i.ID})"
+            class="btn-edit"
+          >
+            ✏️
+          </button>
+
+          <button
+            onclick="deletar(${i.ID})"
+            class="btn-delete"
+          >
+            🗑️
+          </button>
+
         </div>
 
       </div>
       `;
     })
     .join("");
+
 }
 
 // =======================
@@ -87,27 +285,39 @@ function renderHistorico(lista) {
 // =======================
 async function editar(id) {
 
-  const novoValor = prompt("Novo valor:");
+  const novoValor =
+    prompt("Novo valor:");
 
   if (!novoValor) return;
 
-  const valor = Number(novoValor.replace(",", "."));
+  const valor =
+    parseValor(novoValor);
 
   if (isNaN(valor)) {
+
     alert("Valor inválido");
+
     return;
   }
 
   await apiPost({
+
     phone: telefone,
+
     action: "update",
+
     id: id,
+
     data: {
+
       valor: valor
+
     }
+
   });
 
   carregar();
+
 }
 
 // =======================
@@ -115,16 +325,23 @@ async function editar(id) {
 // =======================
 async function deletar(id) {
 
-  const confirmar = confirm("Deseja excluir este lançamento?");
+  const confirmar =
+    confirm("Deseja excluir este lançamento?");
+
   if (!confirmar) return;
 
   await apiPost({
+
     phone: telefone,
+
     action: "delete",
+
     id: id
+
   });
 
   carregar();
+
 }
 
 // =======================
@@ -132,97 +349,182 @@ async function deletar(id) {
 // =======================
 function renderIA(lista) {
 
+  const el =
+    document.getElementById("ia");
+
   if (!lista.length) {
-    document.getElementById("ia").innerText = "Sem dados ainda.";
+
+    el.innerText =
+      "Sem dados neste período.";
+
     return;
   }
 
   let total = 0;
+
   let categorias = {};
+
   let maiorValor = 0;
+
   let maiorItem = null;
 
-  lista.forEach(i => {
+  lista.forEach((i) => {
 
-    let valor = String(i.Valor)
-      .replace("R$", "")
-      .replace(",", ".")
-      .replace(/[^\d.]/g, "");
+    const valor =
+      parseValor(i.Valor);
 
-    valor = Number(valor) || 0;
-
-    const cat = i.Categoria || "Outros";
+    const cat =
+      i.Categoria || "Outros";
 
     total += valor;
 
-    categorias[cat] = (categorias[cat] || 0) + valor;
+    categorias[cat] =
+      (categorias[cat] || 0) + valor;
 
     if (valor > maiorValor) {
+
       maiorValor = valor;
+
       maiorItem = i;
+
     }
+
   });
 
-  const topCategoria = Object.entries(categorias)
-    .sort((a, b) => b[1] - a[1])[0];
+  // 🔥 PROTEÇÃO
+  const topCategoria =
+    Object.entries(categorias)
+      .sort((a, b) => b[1] - a[1])[0]
+      || ["Outros", 0];
 
-  document.getElementById("ia").innerHTML = `
-    💰 Total gasto: <b>R$ ${total.toFixed(2)}</b><br><br>
+  el.innerHTML = `
 
-    📊 Categoria principal: <b>${topCategoria[0]}</b><br>
-    💸 Total: R$ ${topCategoria[1].toFixed(2)}<br><br>
+    💰 Total gasto:
+    <b>R$ ${total.toFixed(2)}</b>
 
-    🔥 Maior gasto real:<br>
-    <b>${maiorItem?.["Descrição"] || "-"}</b><br>
+    <br><br>
+
+    📊 Categoria principal:
+    <b>${topCategoria[0]}</b>
+
+    <br>
+
+    💸 Total:
+    R$ ${topCategoria[1].toFixed(2)}
+
+    <br><br>
+
+    🔥 Maior gasto real:
+
+    <br>
+
+    <b>
+      ${maiorItem?.["Descrição"] || "-"}
+    </b>
+
+    <br>
+
     R$ ${maiorValor.toFixed(2)}
+
   `;
+
 }
 
-//RENDER GRAFICO MENSAL (LISTA)
+// =======================
+// 📈 GRÁFICO MENSAL
+// =======================
 function renderGraficoMensal(lista) {
 
   const meses = {};
 
-  lista.forEach(i => {
+  lista.forEach((i) => {
 
-    let valor = String(i.Valor)
-      .replace("R$", "")
-      .replace(",", ".")
-      .replace(/[^\d.]/g, "");
+    const valor =
+      parseValor(i.Valor);
 
-    valor = Number(valor) || 0;
-
-    // Data formato: dd/MM/yyyy
+    // dd/MM/yyyy
     const data = i.Data || "";
-    const mes = data.substring(3, 10); // MM/yyyy
+
+    const mes =
+      data.substring(3, 10);
 
     if (!mes) return;
 
-    meses[mes] = (meses[mes] || 0) + valor;
+    meses[mes] =
+      (meses[mes] || 0) + valor;
+
   });
 
-  const labels = Object.keys(meses).sort();
-  const valores = labels.map(m => meses[m]);
+  // 🔥 ORDENA CRONOLOGICAMENTE
+  const labels = Object.keys(meses).sort((a, b) => {
 
-  const ctx = document.getElementById("graficoMensal");
+    const [mesA, anoA] = a.split("/");
+    const [mesB, anoB] = b.split("/");
 
-  if (window.chartMensal) window.chartMensal.destroy();
+    return (
+      new Date(anoA, mesA - 1) -
+      new Date(anoB, mesB - 1)
+    );
+
+  });
+
+  const valores =
+    labels.map(m => meses[m]);
+
+  const ctx =
+    document.getElementById("graficoMensal");
+
+  if (window.chartMensal) {
+    window.chartMensal.destroy();
+  }
 
   window.chartMensal = new Chart(ctx, {
+
     type: "line",
+
     data: {
+
       labels: labels,
+
       datasets: [{
+
         label: "Gasto mensal",
+
         data: valores,
-        tension: 0.3
+
+        tension: 0.3,
+
+        fill: true
+
       }]
+
+    },
+
+    options: {
+
+      responsive: true,
+
+      plugins: {
+
+        legend: {
+          display: true
+        }
+
+      }
+
     }
+
   });
+
 }
 
 // =======================
 // 🔄 AUTO UPDATE
 // =======================
 carregar();
-setInterval(carregar, 10000);
+
+setInterval(() => {
+
+  carregar();
+
+}, 10000);

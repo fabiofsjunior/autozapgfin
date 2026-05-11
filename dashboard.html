@@ -19,6 +19,13 @@
     <canvas id="grafico"></canvas>
   </div>
 
+  <select id="filtroPeriodo" onchange="atualizarDashboard()">
+  <option value="SEMANA">Semana</option>
+  <option value="MES" selected>Mês</option>
+  <option value="ANO">Ano</option>
+  <option value="TUDO">Tudo</option>
+  </select>
+
   <div class="card">
     <h3>📈 Linha de Tendência</h3>
     <canvas id="graficoMensal"></canvas>
