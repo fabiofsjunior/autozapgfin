@@ -34,7 +34,7 @@ body {
   padding: 14px;
   border-radius: 10px;
   border: none;
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
   font-weight: bold;
   font-size: 16px;
@@ -46,7 +46,7 @@ body {
   padding: 15px;
   margin-bottom: 15px;
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* HISTÓRICO */
@@ -156,4 +156,64 @@ canvas {
 .btn-delete {
   background: #f44336;
   color: white;
+}
+
+/* =========================
+   📅 FILTROS PERÍODO
+========================= */
+
+.filtros-periodo {
+  display: flex;
+
+  justify-content: space-evenly;
+
+  gap: 8px;
+
+  overflow-x: auto;
+
+  padding-bottom: 10px;
+
+  margin-bottom: 15px;
+
+  scrollbar-width: none;
+}
+
+.filtros-periodo::-webkit-scrollbar {
+  display: none;
+}
+
+.filtro-btn {
+  border: none;
+
+  background: white;
+
+  padding: 10px 16px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  color: #555;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  transition: all 0.2s ease;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.filtro-btn:hover {
+  transform: translateY(-1px);
+}
+
+.filtro-btn.ativo {
+  background: #4caf50;
+
+  color: white;
+
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.25);
 }

@@ -1,44 +1,62 @@
 <!doctype html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard</title>
 
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
 
-<body>
+  <body>
+    <div class="container">
+      <h2>📊 Dashboard</h2>
 
-<div class="container">
+      <div class="card">
+        <canvas id="grafico"></canvas>
+      </div>
 
-  <h2>📊 Dashboard</h2>
+      <div class="filtros-periodo">
+        <button class="filtro-btn ativo" onclick="alterarFiltro('DIA', this)">
+          Dia
+        </button>
 
-  <div class="card">
-    <canvas id="grafico"></canvas>
-  </div>
+        <button class="filtro-btn" onclick="alterarFiltro('SEMANA', this)">
+          Semana
+        </button>
 
-  <div class="card">
-    <h3>📈 Linha de Tendência</h3>
-    <canvas id="graficoMensal"></canvas>
-  </div>
+        <button class="filtro-btn" onclick="alterarFiltro('MES', this)">
+          Mês
+        </button>
 
-  <div class="card">
-    <h3>🧠 Análise de Gastos</h3>
-    <div id="ia"></div>
-  </div>
+        <button class="filtro-btn" onclick="alterarFiltro('ANO', this)">
+          Ano
+        </button>
 
-  <div class="card">
-    <h3>📄 Histórico de Transações</h3>
-    <div id="historico"></div>
-  </div>
+        <button class="filtro-btn" onclick="alterarFiltro('TUDO', this)">
+          Tudo
+        </button>
+      </div>
 
-</div>
+      <div class="card">
+        <h3>📈 Linha de Tendência</h3>
+        <canvas id="graficoMensal"></canvas>
+      </div>
 
-<script src="utils.js" defer></script>
-<script src="api.js" defer></script>
-<script src="dashboard.js" defer></script>
+      <div class="card">
+        <h3>🧠 Análise de Gastos</h3>
+        <div id="ia"></div>
+      </div>
 
-</body>
+      <div class="card">
+        <h3>📄 Histórico de Transações</h3>
+        <div id="historico"></div>
+      </div>
+    </div>
+
+    <script src="utils.js" defer></script>
+    <script src="api.js" defer></script>
+    <script src="dashboard.js" defer></script>
+  </body>
 </html>
