@@ -70,54 +70,80 @@ function alterarFiltro(periodo, btn) {
 // =======================
 // 📅 FILTRO POR PERÍODO (CORRIGIDO DEFINITIVO)
 // =======================
+// =======================
+// 📅 NORMALIZAR DATA (SEM TIMEZONE BUG)
+// =======================
+function normalizarData(dataStr) {
+  if (!dataStr) return null;
+
+  // ISO: 2026-04-29T03:00:00.000Z
+  if (dataStr.includes("T")) {
+    return dataStr.split("T")[0];
+  }
+
+  // dd/MM/yyyy
+  if (dataStr.includes("/")) {
+    const [d, m, y] = dataStr.split("/");
+    return `${y}-${m}-${d}`;
+  }
+
+  return null;
+}
+
+// =======================
+// 📅 FILTRO DE PERÍODO (CORRIGIDO 100%)
+// =======================
 function filtrarPeriodo(lista) {
   const filtro = filtroAtual;
 
   const hoje = new Date();
-  const hojeStr = hoje.toISOString().split("T")[0];
-
-  const hojeDate = new Date(hojeStr + "T00:00:00");
+  const hojeStr = hoje.toISOString().split("T")[0]; // YYYY-MM-DD
 
   return lista.filter((i) => {
     const dataStr = normalizarData(i.Data);
     if (!dataStr) return false;
 
-    const data = new Date(dataStr + "T00:00:00");
-
     // =======================
-    // DIA
+    // 📍 DIA
     // =======================
     if (filtro === "DIA") {
       return dataStr === hojeStr;
     }
 
     // =======================
-    // SEMANA (DOM - SAB)
+    // 📍 SEMANA (DOM - SAB)
     // =======================
     if (filtro === "SEMANA") {
-      const inicio = new Date(hojeDate);
-      inicio.setDate(inicio.getDate() - inicio.getDay());
+      const hojeDate = new Date(hojeStr);
 
-      return data >= inicio;
+      const inicioSemana = new Date(hojeDate);
+      inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+
+      const dataItem = new Date(dataStr);
+
+      return dataItem >= inicioSemana && dataItem <= hojeDate;
     }
 
     // =======================
-    // MÊS
+    // 📍 MÊS
     // =======================
     if (filtro === "MES") {
-      return (
-        data.getMonth() === hojeDate.getMonth() &&
-        data.getFullYear() === hojeDate.getFullYear()
-      );
+      const [y1, m1] = dataStr.split("-");
+      const [y2, m2] = hojeStr.split("-");
+
+      return y1 === y2 && m1 === m2;
     }
 
     // =======================
-    // ANO
+    // 📍 ANO
     // =======================
     if (filtro === "ANO") {
-      return data.getFullYear() === hojeDate.getFullYear();
+      return dataStr.split("-")[0] === hojeStr.split("-")[0];
     }
 
+    // =======================
+    // 📍 TUDO
+    // =======================
     return true;
   });
 }
