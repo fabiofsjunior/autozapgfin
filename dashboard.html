@@ -17,16 +17,26 @@
         <canvas id="grafico"></canvas>
       </div>
 
-      <div class="filtro-container">
-        <select id="filtroPeriodo" onchange="carregar()">
-          <option value="SEMANA">📅 Semana</option>
+      <div class="filtros-periodo">
+        <button class="filtro-btn ativo" onclick="alterarFiltro('DIA', this)">
+          Dia
+        </button>
 
-          <option value="MES" selected>📆 Mês</option>
+        <button class="filtro-btn" onclick="alterarFiltro('SEMANA', this)">
+          Semana
+        </button>
 
-          <option value="ANO">🗓 Ano</option>
+        <button class="filtro-btn" onclick="alterarFiltro('MES', this)">
+          Mês
+        </button>
 
-          <option value="TUDO">📊 Tudo</option>
-        </select>
+        <button class="filtro-btn" onclick="alterarFiltro('ANO', this)">
+          Ano
+        </button>
+
+        <button class="filtro-btn" onclick="alterarFiltro('TUDO', this)">
+          Tudo
+        </button>
       </div>
 
       <div class="card">
