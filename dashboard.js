@@ -27,14 +27,29 @@ function parseValor(valor) {
         .replace("R$", "")
         .replace(/\./g, "")
         .replace(",", ".")
-        .replace(/[^\d.-]/g, ""),
+        .replace(/[^\d.-]/g, "")
     ) || 0
   );
 }
 
 // =======================
-// 📅 FILTRO POR PERÍODO
+// 📅 PARSE DATA (CORRIGIDO)
 // =======================
+function parseData(dataStr) {
+  if (!dataStr) return null;
+
+  // ISO
+  if (dataStr.includes("-")) {
+    return new Date(dataStr);
+  }
+
+  // dd/MM/yyyy
+  const partes = dataStr.split("/");
+  if (partes.length !== 3) return null;
+
+  const [d, m, y] = partes;
+  return new Date(y, m - 1, d);
+}
 
 // =======================
 // 🔄 ALTERAR FILTRO
@@ -42,17 +57,18 @@ function parseValor(valor) {
 function alterarFiltro(periodo, btn) {
   filtroAtual = periodo;
 
-  // REMOVE CLASSE ATIVA
   document
     .querySelectorAll(".filtro-btn")
     .forEach((b) => b.classList.remove("ativo"));
 
-  // ADICIONA CLASSE ATIVA
   btn.classList.add("ativo");
 
   carregar();
 }
 
+// =======================
+// 📅 FILTRO POR PERÍODO (CORRIGIDO)
+// =======================
 function filtrarPeriodo(lista) {
   const filtro = filtroAtual;
 
@@ -60,14 +76,13 @@ function filtrarPeriodo(lista) {
   hoje.setHours(0, 0, 0, 0);
 
   return lista.filter((i) => {
-    if (!i.Data) return false;
+    const dataItem = parseData(i.Data);
+    if (!dataItem) return false;
 
-    // 🔥 normaliza data ignorando timezone (EVITA BUG Z)
-    const dataItem = new Date(i.Data);
     const localDate = new Date(
       dataItem.getFullYear(),
       dataItem.getMonth(),
-      dataItem.getDate(),
+      dataItem.getDate()
     );
 
     localDate.setHours(0, 0, 0, 0);
@@ -80,11 +95,12 @@ function filtrarPeriodo(lista) {
     }
 
     // =======================
-    // SEMANA
+    // SEMANA (SEMANA REAL)
     // =======================
     if (filtro === "SEMANA") {
       const inicio = new Date(hoje);
-      inicio.setDate(hoje.getDate() - 7);
+      const diaSemana = inicio.getDay(); // domingo = 0
+      inicio.setDate(inicio.getDate() - diaSemana);
       return localDate >= inicio;
     }
 
@@ -123,13 +139,14 @@ async function carregar() {
   try {
     const dados = await getDados(telefone);
 
-    console.log("🔥 DADOS BRUTOS DO BACKEND:", dados);
+    console.log("🔥 DADOS BRUTOS:", dados);
 
-    const validos = dados.filter((i) => i.ID && i.Valor);
+    const validos = dados.filter(
+      (i) => i.ID && i.Valor !== undefined && i.Valor !== null
+    );
 
     console.log("✔ VALIDOS:", validos);
 
-    // 👇 AQUI REMOVE DUPLICADOS
     const unicos = removerDuplicados(validos);
 
     const filtrados = filtrarPeriodo(unicos);
@@ -155,7 +172,6 @@ function renderGrafico(lista) {
 
   lista.forEach((i) => {
     const cat = i.Categoria || "Outros";
-
     resumo[cat] = (resumo[cat] || 0) + parseValor(i.Valor);
   });
 
@@ -167,20 +183,16 @@ function renderGrafico(lista) {
 
   window.chart = new Chart(ctx, {
     type: "doughnut",
-
     data: {
       labels: Object.keys(resumo),
-
       datasets: [
         {
           data: Object.values(resumo),
         },
       ],
     },
-
     options: {
       responsive: true,
-
       plugins: {
         legend: {
           position: "bottom",
@@ -191,16 +203,13 @@ function renderGrafico(lista) {
 }
 
 // =======================
-// 📄 HISTÓRICO (COM CRUD)
+// 📄 HISTÓRICO
 // =======================
 function renderHistorico(lista) {
   const el = document.getElementById("historico");
 
   const ordenado = [...lista].sort((a, b) => {
-    const da = new Date(a.Data);
-    const db = new Date(b.Data);
-
-    return db - da;
+    return parseData(b.Data) - parseData(a.Data);
   });
 
   el.innerHTML = ordenado
@@ -212,27 +221,13 @@ function renderHistorico(lista) {
       <div class="item">
 
         <div class="info">
-
-          <strong>
-            ${i["Descrição"] || "-"}
-          </strong>
-
-          <span>
-            R$ ${parseValor(i.Valor).toFixed(2)}
-          </span>
-
+          <strong>${i["Descrição"] || "-"}</strong>
+          <span>R$ ${parseValor(i.Valor).toFixed(2)}</span>
         </div>
 
         <div class="acoes">
-
-          <button onclick="editar(${i.ID})" class="btn-edit">
-            ✏️
-          </button>
-
-          <button onclick="deletar(${i.ID})" class="btn-delete">
-            🗑️
-          </button>
-
+          <button onclick="editar(${i.ID})" class="btn-edit">✏️</button>
+          <button onclick="deletar(${i.ID})" class="btn-delete">🗑️</button>
         </div>
 
       </div>
@@ -253,20 +248,14 @@ async function editar(id) {
 
   if (isNaN(valor)) {
     alert("Valor inválido");
-
     return;
   }
 
   await apiPost({
     phone: telefone,
-
     action: "update",
-
     id: id,
-
-    data: {
-      valor: valor,
-    },
+    data: { valor },
   });
 
   carregar();
@@ -277,14 +266,11 @@ async function editar(id) {
 // =======================
 async function deletar(id) {
   const confirmar = confirm("Deseja excluir este lançamento?");
-
   if (!confirmar) return;
 
   await apiPost({
     phone: telefone,
-
     action: "delete",
-
     id: id,
   });
 
@@ -299,96 +285,70 @@ function renderIA(lista) {
 
   if (!lista.length) {
     el.innerText = "Sem dados neste período.";
-
     return;
   }
 
   let total = 0;
-
   let categorias = {};
-
   let maiorValor = 0;
-
   let maiorItem = null;
 
   lista.forEach((i) => {
     const valor = parseValor(i.Valor);
-
     const cat = i.Categoria || "Outros";
 
     total += valor;
-
     categorias[cat] = (categorias[cat] || 0) + valor;
 
     if (valor > maiorValor) {
       maiorValor = valor;
-
       maiorItem = i;
     }
   });
 
-  // 🔥 PROTEÇÃO
-  const topCategoria = Object.entries(categorias).sort(
-    (a, b) => b[1] - a[1],
-  )[0] || ["Outros", 0];
+  const topCategoria =
+    Object.entries(categorias).sort((a, b) => b[1] - a[1])[0] || [
+      "Outros",
+      0,
+    ];
 
   el.innerHTML = `
-
-    💰 Total gasto:
-    <b>R$ ${total.toFixed(2)}</b>
-
+    💰 Total gasto: <b>R$ ${total.toFixed(2)}</b>
     <br><br>
 
-    📊 Categoria principal:
-    <b>${topCategoria[0]}</b>
-
+    📊 Categoria principal: <b>${topCategoria[0]}</b>
     <br>
-
-    💸 Total:
-    R$ ${topCategoria[1].toFixed(2)}
-
+    💸 Total: R$ ${topCategoria[1].toFixed(2)}
     <br><br>
 
     🔥 Maior gasto real:
-
     <br>
-
-    <b>
-      ${maiorItem?.["Descrição"] || "-"}
-    </b>
-
+    <b>${maiorItem?.["Descrição"] || "-"}</b>
     <br>
-
     R$ ${maiorValor.toFixed(2)}
-
   `;
 }
 
 // =======================
-// 📈 GRÁFICO MENSAL
+// 📈 GRÁFICO MENSAL (CORRIGIDO)
 // =======================
 function renderGraficoMensal(lista) {
   const meses = {};
 
   lista.forEach((i) => {
-    const valor = parseValor(i.Valor);
+    const d = parseData(i.Data);
+    if (!d) return;
 
-    // dd/MM/yyyy
-    const data = i.Data || "";
+    const mes = `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 
-    const mes = data.substring(3, 10);
-
-    if (!mes) return;
-
-    meses[mes] = (meses[mes] || 0) + valor;
+    meses[mes] = (meses[mes] || 0) + parseValor(i.Valor);
   });
 
-  // 🔥 ORDENA CRONOLOGICAMENTE
   const labels = Object.keys(meses).sort((a, b) => {
-    const [mesA, anoA] = a.split("/");
-    const [mesB, anoB] = b.split("/");
+    const [ma, ya] = a.split("/");
+    const [mb, yb] = b.split("/");
 
-    return new Date(anoA, mesA - 1) - new Date(anoB, mesB - 1);
+    return new Date(ya, ma - 1) - new Date(yb, mb - 1);
   });
 
   const valores = labels.map((m) => meses[m]);
@@ -401,26 +361,19 @@ function renderGraficoMensal(lista) {
 
   window.chartMensal = new Chart(ctx, {
     type: "line",
-
     data: {
-      labels: labels,
-
+      labels,
       datasets: [
         {
           label: "Gasto mensal",
-
           data: valores,
-
           tension: 0.3,
-
           fill: true,
         },
       ],
     },
-
     options: {
       responsive: true,
-
       plugins: {
         legend: {
           display: true,
@@ -430,12 +383,15 @@ function renderGraficoMensal(lista) {
   });
 }
 
-///REMOVE OS DUPLICADOS DA SOMA
+// =======================
+// 🔥 REMOVE DUPLICADOS REAL
+// =======================
 function removerDuplicados(lista) {
   const map = new Map();
 
   lista.forEach((item) => {
-    map.set(item.ID, item); // sobrescreve duplicados
+    const chave = `${item.ID}-${item.Valor}-${item.Data}`;
+    map.set(chave, item);
   });
 
   return Array.from(map.values());
