@@ -116,13 +116,11 @@ function filtrarPeriodo(lista) {
 // 📊 CARREGAR DADOS
 // =======================
 async function carregar() {
-
   if (carregando) return;
 
   carregando = true;
 
   try {
-
     const dados = await getDados(telefone);
 
     console.log("🔥 DADOS BRUTOS DO BACKEND:", dados);
@@ -131,7 +129,10 @@ async function carregar() {
 
     console.log("✔ VALIDOS:", validos);
 
-    const filtrados = filtrarPeriodo(validos);
+    // 👇 AQUI REMOVE DUPLICADOS
+    const unicos = removerDuplicados(validos);
+
+    const filtrados = filtrarPeriodo(unicos);
 
     console.log("📅 FILTRADOS:", filtrados);
 
@@ -139,7 +140,6 @@ async function carregar() {
     renderGrafico(filtrados);
     renderGraficoMensal(filtrados);
     renderIA(filtrados);
-
   } catch (erro) {
     console.error("Erro ao carregar:", erro);
   } finally {
@@ -194,22 +194,18 @@ function renderGrafico(lista) {
 // 📄 HISTÓRICO (COM CRUD)
 // =======================
 function renderHistorico(lista) {
-
   const el = document.getElementById("historico");
 
   const ordenado = [...lista].sort((a, b) => {
-
     const da = new Date(a.Data);
     const db = new Date(b.Data);
 
     return db - da;
-
   });
 
   el.innerHTML = ordenado
     .slice(0, 50)
     .map((i) => {
-
       if (!i.ID || i.Valor === undefined) return "";
 
       return `
@@ -241,7 +237,6 @@ function renderHistorico(lista) {
 
       </div>
       `;
-
     })
     .join("");
 }
@@ -433,6 +428,17 @@ function renderGraficoMensal(lista) {
       },
     },
   });
+}
+
+///REMOVE OS DUPLICADOS DA SOMA
+function removerDuplicados(lista) {
+  const map = new Map();
+
+  lista.forEach((item) => {
+    map.set(item.ID, item); // sobrescreve duplicados
+  });
+
+  return Array.from(map.values());
 }
 
 // =======================
