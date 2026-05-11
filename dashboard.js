@@ -54,39 +54,38 @@ function alterarFiltro(periodo, btn) {
 }
 
 function filtrarPeriodo(lista) {
-
   const filtro = filtroAtual;
+
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
   return lista.filter((i) => {
+    if (!i.Data) return false;
 
-    const raw = i.Data;
+    // 🔥 normaliza data ignorando timezone (EVITA BUG Z)
+    const dataItem = new Date(i.Data);
+    const localDate = new Date(
+      dataItem.getFullYear(),
+      dataItem.getMonth(),
+      dataItem.getDate(),
+    );
 
-    if (!raw) return false;
-
-    const dataItem = new Date(raw);
-
-    if (isNaN(dataItem)) return false;
-
-    dataItem.setHours(0, 0, 0, 0);
+    localDate.setHours(0, 0, 0, 0);
 
     // =======================
     // DIA
     // =======================
     if (filtro === "DIA") {
-      return dataItem.getTime() === hoje.getTime();
+      return localDate.getTime() === hoje.getTime();
     }
 
     // =======================
     // SEMANA
     // =======================
     if (filtro === "SEMANA") {
-
       const inicio = new Date(hoje);
       inicio.setDate(hoje.getDate() - 7);
-
-      return dataItem >= inicio;
+      return localDate >= inicio;
     }
 
     // =======================
@@ -94,8 +93,8 @@ function filtrarPeriodo(lista) {
     // =======================
     if (filtro === "MES") {
       return (
-        dataItem.getMonth() === hoje.getMonth() &&
-        dataItem.getFullYear() === hoje.getFullYear()
+        localDate.getMonth() === hoje.getMonth() &&
+        localDate.getFullYear() === hoje.getFullYear()
       );
     }
 
@@ -103,7 +102,7 @@ function filtrarPeriodo(lista) {
     // ANO
     // =======================
     if (filtro === "ANO") {
-      return dataItem.getFullYear() === hoje.getFullYear();
+      return localDate.getFullYear() === hoje.getFullYear();
     }
 
     // =======================
