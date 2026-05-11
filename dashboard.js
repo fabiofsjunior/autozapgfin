@@ -127,26 +127,30 @@ function filtrarPeriodo(lista) {
 // 📊 CARREGAR DADOS
 // =======================
 async function carregar() {
-  // 🚫 EVITA CHAMADAS DUPLAS
+
   if (carregando) return;
 
   carregando = true;
 
   try {
+
     const dados = await getDados(telefone);
+
+    console.log("🔥 DADOS BRUTOS DO BACKEND:", dados);
 
     const validos = dados.filter((i) => i.ID && i.Valor);
 
-    // 🔥 FILTRO GLOBAL
+    console.log("✔ VALIDOS:", validos);
+
     const filtrados = filtrarPeriodo(validos);
 
+    console.log("📅 FILTRADOS:", filtrados);
+
     renderHistorico(filtrados);
-
     renderGrafico(filtrados);
-
     renderGraficoMensal(filtrados);
-
     renderIA(filtrados);
+
   } catch (erro) {
     console.error("Erro ao carregar:", erro);
   } finally {
