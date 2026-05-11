@@ -18,7 +18,7 @@ if (!telefone) {
 let carregando = false;
 
 // =======================
-// 💰 PARSE VALOR MONETÁRIO
+// 💰 PARSE VALOR
 // =======================
 function parseValor(valor) {
   return (
@@ -33,22 +33,23 @@ function parseValor(valor) {
 }
 
 // =======================
-// 📅 PARSE DATA (CORRIGIDO)
+// 📅 NORMALIZAR DATA (ANTI TIMEZONE BUG)
 // =======================
-function parseData(dataStr) {
+function normalizarData(dataStr) {
   if (!dataStr) return null;
 
-  // ISO
-  if (dataStr.includes("-")) {
-    return new Date(dataStr);
+  // ISO (backend)
+  if (dataStr.includes("T")) {
+    return dataStr.split("T")[0]; // YYYY-MM-DD
   }
 
   // dd/MM/yyyy
-  const partes = dataStr.split("/");
-  if (partes.length !== 3) return null;
+  if (dataStr.includes("/")) {
+    const [d, m, y] = dataStr.split("/");
+    return `${y}-${m}-${d}`;
+  }
 
-  const [d, m, y] = partes;
-  return new Date(y, m - 1, d);
+  return null;
 }
 
 // =======================
@@ -67,41 +68,37 @@ function alterarFiltro(periodo, btn) {
 }
 
 // =======================
-// 📅 FILTRO POR PERÍODO (CORRIGIDO)
+// 📅 FILTRO POR PERÍODO (CORRIGIDO DEFINITIVO)
 // =======================
 function filtrarPeriodo(lista) {
   const filtro = filtroAtual;
 
   const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const hojeStr = hoje.toISOString().split("T")[0];
+
+  const hojeDate = new Date(hojeStr + "T00:00:00");
 
   return lista.filter((i) => {
-    const dataItem = parseData(i.Data);
-    if (!dataItem) return false;
+    const dataStr = normalizarData(i.Data);
+    if (!dataStr) return false;
 
-    const localDate = new Date(
-      dataItem.getFullYear(),
-      dataItem.getMonth(),
-      dataItem.getDate()
-    );
-
-    localDate.setHours(0, 0, 0, 0);
+    const data = new Date(dataStr + "T00:00:00");
 
     // =======================
     // DIA
     // =======================
     if (filtro === "DIA") {
-      return localDate.getTime() === hoje.getTime();
+      return dataStr === hojeStr;
     }
 
     // =======================
-    // SEMANA (SEMANA REAL)
+    // SEMANA (DOM - SAB)
     // =======================
     if (filtro === "SEMANA") {
-      const inicio = new Date(hoje);
-      const diaSemana = inicio.getDay(); // domingo = 0
-      inicio.setDate(inicio.getDate() - diaSemana);
-      return localDate >= inicio;
+      const inicio = new Date(hojeDate);
+      inicio.setDate(inicio.getDate() - inicio.getDay());
+
+      return data >= inicio;
     }
 
     // =======================
@@ -109,8 +106,8 @@ function filtrarPeriodo(lista) {
     // =======================
     if (filtro === "MES") {
       return (
-        localDate.getMonth() === hoje.getMonth() &&
-        localDate.getFullYear() === hoje.getFullYear()
+        data.getMonth() === hojeDate.getMonth() &&
+        data.getFullYear() === hojeDate.getFullYear()
       );
     }
 
@@ -118,12 +115,9 @@ function filtrarPeriodo(lista) {
     // ANO
     // =======================
     if (filtro === "ANO") {
-      return localDate.getFullYear() === hoje.getFullYear();
+      return data.getFullYear() === hojeDate.getFullYear();
     }
 
-    // =======================
-    // TUDO
-    // =======================
     return true;
   });
 }
@@ -144,8 +138,6 @@ async function carregar() {
     const validos = dados.filter(
       (i) => i.ID && i.Valor !== undefined && i.Valor !== null
     );
-
-    console.log("✔ VALIDOS:", validos);
 
     const unicos = removerDuplicados(validos);
 
@@ -177,9 +169,7 @@ function renderGrafico(lista) {
 
   const ctx = document.getElementById("grafico");
 
-  if (window.chart) {
-    window.chart.destroy();
-  }
+  if (window.chart) window.chart.destroy();
 
   window.chart = new Chart(ctx, {
     type: "doughnut",
@@ -209,17 +199,16 @@ function renderHistorico(lista) {
   const el = document.getElementById("historico");
 
   const ordenado = [...lista].sort((a, b) => {
-    return parseData(b.Data) - parseData(a.Data);
+    const da = new Date(normalizarData(b.Data));
+    const db = new Date(normalizarData(a.Data));
+    return da - db;
   });
 
   el.innerHTML = ordenado
     .slice(0, 50)
     .map((i) => {
-      if (!i.ID || i.Valor === undefined) return "";
-
       return `
       <div class="item">
-
         <div class="info">
           <strong>${i["Descrição"] || "-"}</strong>
           <span>R$ ${parseValor(i.Valor).toFixed(2)}</span>
@@ -229,7 +218,6 @@ function renderHistorico(lista) {
           <button onclick="editar(${i.ID})" class="btn-edit">✏️</button>
           <button onclick="deletar(${i.ID})" class="btn-delete">🗑️</button>
         </div>
-
       </div>
       `;
     })
@@ -241,7 +229,6 @@ function renderHistorico(lista) {
 // =======================
 async function editar(id) {
   const novoValor = prompt("Novo valor:");
-
   if (!novoValor) return;
 
   const valor = parseValor(novoValor);
@@ -254,7 +241,7 @@ async function editar(id) {
   await apiPost({
     phone: telefone,
     action: "update",
-    id: id,
+    id,
     data: { valor },
   });
 
@@ -265,20 +252,19 @@ async function editar(id) {
 // 🗑 DELETAR
 // =======================
 async function deletar(id) {
-  const confirmar = confirm("Deseja excluir este lançamento?");
-  if (!confirmar) return;
+  if (!confirm("Deseja excluir este lançamento?")) return;
 
   await apiPost({
     phone: telefone,
     action: "delete",
-    id: id,
+    id,
   });
 
   carregar();
 }
 
 // =======================
-// 🧠 IA (ANÁLISE)
+// 🧠 IA
 // =======================
 function renderIA(lista) {
   const el = document.getElementById("ia");
@@ -313,15 +299,15 @@ function renderIA(lista) {
     ];
 
   el.innerHTML = `
-    💰 Total gasto: <b>R$ ${total.toFixed(2)}</b>
+    💰 Total: <b>R$ ${total.toFixed(2)}</b>
     <br><br>
 
-    📊 Categoria principal: <b>${topCategoria[0]}</b>
+    📊 Categoria: <b>${topCategoria[0]}</b>
     <br>
     💸 Total: R$ ${topCategoria[1].toFixed(2)}
     <br><br>
 
-    🔥 Maior gasto real:
+    🔥 Maior gasto:
     <br>
     <b>${maiorItem?.["Descrição"] || "-"}</b>
     <br>
@@ -336,8 +322,10 @@ function renderGraficoMensal(lista) {
   const meses = {};
 
   lista.forEach((i) => {
-    const d = parseData(i.Data);
-    if (!d) return;
+    const dataStr = normalizarData(i.Data);
+    if (!dataStr) return;
+
+    const d = new Date(dataStr + "T00:00:00");
 
     const mes = `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 
@@ -355,9 +343,7 @@ function renderGraficoMensal(lista) {
 
   const ctx = document.getElementById("graficoMensal");
 
-  if (window.chartMensal) {
-    window.chartMensal.destroy();
-  }
+  if (window.chartMensal) window.chartMensal.destroy();
 
   window.chartMensal = new Chart(ctx, {
     type: "line",
@@ -365,7 +351,7 @@ function renderGraficoMensal(lista) {
       labels,
       datasets: [
         {
-          label: "Gasto mensal",
+          label: "Gastos",
           data: valores,
           tension: 0.3,
           fill: true,
@@ -374,17 +360,12 @@ function renderGraficoMensal(lista) {
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: {
-          display: true,
-        },
-      },
     },
   });
 }
 
 // =======================
-// 🔥 REMOVE DUPLICADOS REAL
+// 🔥 REMOVE DUPLICADOS
 // =======================
 function removerDuplicados(lista) {
   const map = new Map();
@@ -402,6 +383,4 @@ function removerDuplicados(lista) {
 // =======================
 carregar();
 
-setInterval(() => {
-  carregar();
-}, 10000);
+setInterval(carregar, 60000);
