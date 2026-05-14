@@ -6,7 +6,7 @@ let telefone = localStorage.getItem("telefone");
 // =======================
 // 📅 FILTRO ATIVO
 // =======================
-let filtroAtual = "DIA";
+let filtroAtual = "MES";
 
 if (!telefone) {
   window.location.href = "index.html";
